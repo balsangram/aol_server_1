@@ -83,35 +83,35 @@ router.delete("/deleteHeading/:id", deleteHeading);
 
 //containers
 router.get("/showAllCards/:headline", showAllCards);
-// router.post("/createCard", upload.single("img"), createCard);
+// router.post("/createCard", upload_V2.single("img"), createCard);
 router.post("/createCard", upload_V2.single("img"), createCard);
-router.patch("/updateCard/:id", upload.single("img"), updateCard);
+router.patch("/updateCard/:id", upload_V2.single("img"), updateCard);
 router.delete("/removeCard/:id", removeCard);
 
 router.get("/displayHomeCard", displayHomeCard);
-router.post("/createHomeCard", upload.single("img"), addHomeCard);
-router.patch("/updateHomeCCard/:id", upload.single("img"), updateHomeCard);
+router.post("/createHomeCard", upload_V2.single("img"), addHomeCard);
+router.patch("/updateHomeCCard/:id", upload_V2.single("img"), updateHomeCard);
 router.delete("/removeHomeCard/:id", removeHomeCard);
 
 //user Types
 router.get("/userType", userType);
-router.post("/addUserType", upload.single("img"), addUserType);
+router.post("/addUserType", upload_V2.single("img"), addUserType);
 router.patch("/updateUSerType/:id", updateUserType);
 router.delete("/deleteUSerType/:id", deleteUserType);
 
 //actions
 router.get("/displayAction/:usertype", action);
-router.post("/addAction", upload.any(), addAction);
-router.patch("/updateAction/:id", upload.any(), updateAction);
+router.post("/addAction", upload_V2.any(), addAction);
+router.patch("/updateAction/:id", upload_V2.any(), updateAction);
 router.delete("/deleteAction/:id", deleteAction);
 
 // YouTube Link
-router.post("/addYoutubeLinks", upload.single("thumbnail"), addYoutubeLinks);
+router.post("/addYoutubeLinks", upload_V2.single("thumbnail"), addYoutubeLinks);
 router.get("/displayMobYoutubeLinks", showMobileYoutubeLinks);
 router.get("/displayWebYoutubeLinks", showWebYoutubeLinks);
 router.patch(
   "/updateYoutubeLink/:id",
-  upload.single("thumbnail"),
+  upload_V2.single("thumbnail"),
   updateYoutubeLink
 );
 router.delete("/deleteYoutubeLink/:id", deleteYoutubeLink);
@@ -119,7 +119,7 @@ router.delete("/deleteYoutubeLink/:id", deleteYoutubeLink);
 // Advertising
 router.post(
   "/addAdv",
-  upload.fields([
+  upload_V2.fields([
     { name: "img1", maxCount: 1 },
     { name: "img2", maxCount: 1 },
     { name: "img3", maxCount: 1 },
@@ -127,11 +127,11 @@ router.post(
   addAdvertisement
 );
 
-// router.post("/addAdv", upload.any(), addAdvertisement);
+// router.post("/addAdv", upload_V2.any(), addAdvertisement);
 router.get("/displayAdvertisement", getAdvertisements);
 
 //pop-up
-router.post("/addPopUp", upload.single("img"), addPopUp);
+router.post("/addPopUp", upload_V2.single("img"), addPopUp);
 router.get("/displayPopUp", displayPopUp);
 
 // notification

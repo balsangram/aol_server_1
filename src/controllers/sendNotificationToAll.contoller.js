@@ -2,7 +2,10 @@ import admin from "../../firebase.js";
 import deviceToken from "../models/deviceToken.model.js";
 
 export const sendNotificationToAll = async (req, res) => {
-  const { title = "Default Title", body = "Default body message" } = req.body;
+  const { title, body } = req.body;
+  if (!title || !body) {
+    return res.status(400).json({ message: "fill all the requirement" });
+  }
 
   const message = {
     topic: "all",
