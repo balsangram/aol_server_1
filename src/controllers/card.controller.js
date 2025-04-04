@@ -1,6 +1,6 @@
 import Card from "../models/Card.model.js";
 import HomeCard from "../models/HomeCard.model.js";
-import { uploadCloudinary } from "../utils/cloudnary.js";
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 
 // Show All Cards
 export const showAllCards = async (req, res) => {
@@ -29,11 +29,18 @@ export const showAllCards = async (req, res) => {
 // Create Card
 export const createCard = async (req, res) => {
   try {
-    console.log(req.file, "card file show");
+    // console.log(req.file, "card file show");
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+    console.log(file, "file");
 
     const { name, link, headline } = req.body;
-    const imageUplode = await uploadCloudinary(req.file.path);
-    console.log("imageUplode", imageUplode);
+    const result = await uploadToCloudinary(file.buffer, file.originalname);
+
+    console.log("imageUplode", result);
 
     console.log("req", req.file.img);
 
@@ -41,7 +48,7 @@ export const createCard = async (req, res) => {
     if (existingCard) {
       return res.status(400).json({ message: "Card name already exists" });
     }
-    const newCard = new Card({ name, link, headline, img: imageUplode.url });
+    const newCard = new Card({ name, link, headline, img: result.secure_url });
     console.log(newCard, "newcard");
 
     await newCard.save();
@@ -51,6 +58,30 @@ export const createCard = async (req, res) => {
   }
 };
 
+// export const createCard = async (req, res) => {
+
+// try {
+//   console.log(req.file, "card file show");
+
+//   const { name, link, headline } = req.body;
+//   const imageUplode = await uploadCloudinary(req.file.path);
+//   console.log("imageUplode", imageUplode);
+
+//   console.log("req", req.file.img);
+
+//   const existingCard = await Card.findOne({ name });
+//   if (existingCard) {
+//     return res.status(400).json({ message: "Card name already exists" });
+//   }
+//   const newCard = new Card({ name, link, headline, img: imageUplode.url });
+//   console.log(newCard, "newcard");
+
+//   await newCard.save();
+//   res.status(201).json({ message: "Card created successfully", newCard });
+// } catch (error) {
+//   res.status(400).json({ message: error.message });
+// }
+// };
 // Update Card
 export const updateCard = async (req, res) => {
   try {
