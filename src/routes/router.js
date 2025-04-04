@@ -55,6 +55,10 @@ import {
 } from "../controllers/sendNotificationToAll.contoller.js";
 
 import multer from "multer";
+import {
+  addSOSNumber,
+  getLastSOSNumber,
+} from "../controllers/sosController.js";
 
 // Store files in memory instead of disk
 const storage = multer.memoryStorage();
@@ -129,6 +133,10 @@ router.post(
 
 // router.post("/addAdv", upload_V2.any(), addAdvertisement);
 router.get("/displayAdvertisement", getAdvertisements);
+
+// sos
+router.post("/sos", addSOSNumber);
+router.get("/sos/latest", getLastSOSNumber);
 
 //pop-up
 router.post("/addPopUp", upload_V2.single("img"), addPopUp);
