@@ -54,6 +54,13 @@ import {
   sendNotificationToAll,
 } from "../controllers/sendNotificationToAll.contoller.js";
 
+import multer from "multer";
+
+// Store files in memory instead of disk
+const storage = multer.memoryStorage();
+
+export const upload_V2 = multer({ storage });
+
 const router = express.Router();
 
 // admin functionality
@@ -76,7 +83,8 @@ router.delete("/deleteHeading/:id", deleteHeading);
 
 //containers
 router.get("/showAllCards/:headline", showAllCards);
-router.post("/createCard", upload.single("img"), createCard);
+// router.post("/createCard", upload.single("img"), createCard);
+router.post("/createCard", upload_V2.single("img"), createCard);
 router.patch("/updateCard/:id", upload.single("img"), updateCard);
 router.delete("/removeCard/:id", removeCard);
 

@@ -33,9 +33,9 @@ export const createCard = async (req, res) => {
 
     const { name, link, headline } = req.body;
     const imageUplode = await uploadCloudinary(req.file.path);
-    // console.log("imageUplode", imageUplode);
+    console.log("imageUplode", imageUplode);
 
-    console.log("req", req.file);
+    console.log("req", req.file.img);
 
     const existingCard = await Card.findOne({ name });
     if (existingCard) {

@@ -1,16 +1,14 @@
 import admin from "../../firebase.js";
 import deviceToken from "../models/deviceToken.model.js";
-const token =
-  "cFZBSFLGR0uAVdYvjjAu-d:APA91bH9tTDzc1dYkzkleAdhxkdYau1PQKVW7N_VtHOZnI5AZUcsfHvKKFJzXzrE-iP7oK2hD4juAm5f3HMLwufjcgh6ZuLP0S5Fz4b4-C24jjYdiLYjb-s";
+
 export const sendNotificationToAll = async (req, res) => {
-  console.log(req.body);
+  const { title = "Default Title", body = "Default body message" } = req.body;
 
   const message = {
-    // token: token, // FCM token of the target device
     topic: "all",
     notification: {
-      title: "Default Title",
-      body: "Default body message",
+      title,
+      body,
     },
     android: {
       priority: "high",
@@ -23,16 +21,22 @@ export const sendNotificationToAll = async (req, res) => {
       },
     },
   };
-  //   const response = await admin.messaging().subscribeToTopic(token, "all");
-  //   console.log(`Token subscribed to topic all successfully:`, response);
 
   try {
     const response = await admin.messaging().send(message);
-    console.log("Successfully sent message:", response);
-    res.status(200).json({ message: "message send sucessafully" });
+    console.log("✅ Successfully sent message:", response);
+
+    res.status(200).json({
+      message: "Notification sent successfully to topic 'all'.",
+      firebaseResponse: response,
+    });
   } catch (error) {
-    console.log("Error sending message:", error);
-    res.status(400).json({ message: "message error" }, error);
+    console.error("❌ Error sending message:", error);
+
+    res.status(500).json({
+      message: "Failed to send notification.",
+      error: error.message || error,
+    });
   }
 };
 

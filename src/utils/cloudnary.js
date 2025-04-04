@@ -29,3 +29,20 @@ export const uploadCloudinary = async (localFilePath) => {
     return error;
   }
 };
+
+export const uploadToCloudinary = async (fileBuffer, fileName) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "auto",
+        public_id: `uploads/${fileName}`,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+};
