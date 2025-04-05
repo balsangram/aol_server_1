@@ -11,6 +11,7 @@ import {
   addHeadlines,
   deleteHeading,
   displayHeadlines,
+  multiAddHeadlines,
   updateHeading,
 } from "../controllers/head.controller.js";
 import {
@@ -82,6 +83,7 @@ router.delete("/userDelete/:id", deleteCustomer);
 // Headings
 router.get("/displayHeading", displayHeadlines);
 router.post("/addHeading", addHeadlines);
+// router.post("/addHeading", multiAddHeadlines);
 // router.patch("/updateHeading/:id", updateHeading);
 router.delete("/deleteHeading/:id", deleteHeading);
 
