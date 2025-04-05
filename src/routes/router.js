@@ -102,7 +102,7 @@ router.delete("/removeHomeCard/:id", removeHomeCard);
 //user Types
 router.get("/userType", userType);
 router.post("/addUserType", upload_V2.single("img"), addUserType);
-router.patch("/updateUSerType/:id", updateUserType);
+router.patch("/updateUSerType/:id", upload_V2.single("img"), updateUserType);
 router.delete("/deleteUSerType/:id", deleteUserType);
 
 //actions

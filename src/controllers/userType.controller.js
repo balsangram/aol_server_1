@@ -1,6 +1,6 @@
 import UserType from "../models/UserType.model.js";
 import Action from "../models/Action.model.js";
-import { uploadCloudinary } from "../utils/cloudnary.js";
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 // import { parse } from "dotenv";
 // Show All Cards
 export const userType = async (req, res) => {
@@ -12,31 +12,67 @@ export const userType = async (req, res) => {
   }
 };
 
+// export const addUserType = async (req, res) => {
+//   try {
+//     console.log(req.file, "file uplode");
+//     console.log(req.body, "body");
+
+//     const { usertype } = req.body;
+//     const imageUplode = await uploadCloudinary(req.file.path);
+//     console.log("imageUplode", imageUplode);
+
+//     console.log(req.body);
+//     // Check if the user type already exists
+//     const existingUserType = await UserType.findOne({ usertype });
+//     if (existingUserType) {
+//       return res.status(400).json({ message: "Type name already exists" });
+//     }
+
+//     // Create new user type
+//     const newUserType = new UserType({ usertype, img: imageUplode.img });
+//     await newUserType.save();
+
+//     console.log(newUserType, "newUserType");
+
+//     res.status(201).json(newUserType); // ✅ Return the saved user type
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const addUserType = async (req, res) => {
   try {
-    console.log(req.file, "file uplode");
-    console.log(req.body, "body");
+    const file = req.file;
+    console.log(file, "file");
 
-    const { usertype } = req.body;
-    const imageUplode = await uploadCloudinary(req.file.path);
-    console.log("imageUplode", imageUplode);
-
-    console.log(req.body);
-    // Check if the user type already exists
-    const existingUserType = await UserType.findOne({ usertype });
-    if (existingUserType) {
-      return res.status(400).json({ message: "Type name already exists" });
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded." });
     }
+    console.log(file, "file");
 
-    // Create new user type
-    const newUserType = new UserType({ usertype, img: imageUplode.url });
-    await newUserType.save();
+    const { usertype, headline } = req.body;
+    const result = await uploadToCloudinary(file.buffer, file.originalname);
 
-    console.log(newUserType, "newUserType");
+    console.log("imageUplode", result);
 
-    res.status(201).json(newUserType); // ✅ Return the saved user type
+    console.log("req", req.file.img);
+
+    const existingCard = await UserType.findOne({ usertype });
+    if (existingCard) {
+      return res.status(400).json({ message: "Card name already exists" });
+    }
+    const newCard = new UserType({
+      usertype,
+      headline,
+      img: result.secure_url,
+    });
+    console.log(newCard, "newcard");
+
+    await newCard.save();
+    res.status(201).json({ message: "Card created successfully", newCard });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("addUserType error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

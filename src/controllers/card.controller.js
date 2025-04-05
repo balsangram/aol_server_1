@@ -31,6 +31,7 @@ export const createCard = async (req, res) => {
   try {
     // console.log(req.file, "card file show");
     const file = req.file;
+    console.log(file, "file");
 
     if (!file) {
       return res.status(400).json({ message: "No file uploaded." });

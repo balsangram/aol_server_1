@@ -4,7 +4,10 @@ const userTypeSchema = new mongoose.Schema(
   {
     img: {
       type: String,
-      // require: true
+    },
+    name: {
+      type: String,
+      // required: true,
     },
     usertype: {
       type: String,
@@ -15,6 +18,12 @@ const userTypeSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// ⏩ Auto-set `name = usertype` before saving
+userTypeSchema.pre("save", function (next) {
+  this.name = this.usertype;
+  next();
+});
 
 const UserType = mongoose.model("UserType", userTypeSchema);
 export default UserType;
