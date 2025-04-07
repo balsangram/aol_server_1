@@ -115,7 +115,7 @@ router.delete("/deleteUSerType/:id", deleteUserType);
 //actions
 router.get("/displayAction/:usertype", action);
 router.post("/addAction", upload_V2.any(), addAction);
-router.patch("/updateAction/:id", upload_V2.any(), updateAction);
+router.patch("/updateAction/:id", upload_V2.single("img"), updateAction);
 router.delete("/deleteAction/:id", deleteAction);
 
 // YouTube Link
@@ -139,6 +139,12 @@ router.post(
   ]),
   addAdvertisement
 );
+
+// router.post(
+//   "/addAdv",
+//   upload_V2.array("images", 3), // 👈 Accepts 3 files under the "images" field
+//   addAdvertisement
+// );
 
 // router.post("/addAdv", upload_V2.any(), addAdvertisement);
 router.get("/displayAdvertisement", getAdvertisements);

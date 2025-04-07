@@ -1,74 +1,70 @@
 import fs from "fs";
 import Advertisement from "../models/Adv.model.js";
-import { uploadCloudinary } from "../utils/cloudnary.js";
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 
-export const addAdvertisement = async (req, res) => {
-  try {
-    if (!req.files) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Images are required" });
-    }
+// export const addAdvertisement = async (req, res) => {
+//   try {
+//     // ✅ Validate required files and links
+//     const file = req.file;
+//     console.log(file, "file");
 
-    if (!req.body.link1 || !req.body.link2 || !req.body.link3) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All links are required" });
-    }
+//     if (!req.files || !req.files.img1 || !req.files.img2 || !req.files.img3) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All images are required" });
+//     }
 
-    // **Step 1: Delete previous advertisements**
-    await Advertisement.deleteMany({});
-    console.log("Previous advertisements deleted.");
+//     if (!req.body.link1 || !req.body.link2 || !req.body.link3) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All links are required" });
+//     }
 
-    // **Step 2: Upload new images**
-    const imageData = await Promise.all(
-      ["img1", "img2", "img3"].map(async (key, index) => {
-        if (!req.files[key]) throw new Error(`Missing image: ${key}`);
+//     // ✅ Delete old ads
+//     await Advertisement.deleteMany({});
+//     console.log("Old advertisements deleted.");
 
-        const file = req.files[key][0];
+//     // ✅ Upload new images and prepare data
+//     const imageData = await Promise.all(
+//       ["img1", "img2", "img3"].map(async (key, index) => {
+//         const file = req.files[key]?.[0];
 
-        console.log(`Uploading ${file.originalname} to Cloudinary...`);
+//         if (!file) throw new Error(`Missing image: ${key}`);
+//         console.log(`Uploading ${file.originalname} to Cloudinary...`);
 
-        // const uploadedImage = await uploadCloudinary(file.path);
-    
-              const imageUpload = await uploadCloudinary(req.file.path); // Upload image
-           
-        
+//         const uploadedImage = await uploadCloudinary(file.path);
+//         console.log(`Uploaded to: ${uploadedImage.secure_url}`);
 
-        console.log(`Uploaded: ${uploadedImage.secure_url}`);
+//         // ✅ Clean up temp file
+//         if (fs.existsSync(file.path)) {
+//           await fs.promises.unlink(file.path);
+//           console.log(`Deleted local file: ${file.path}`);
+//         }
 
-        // **Delete local temp file if it exists**
-        if (fs.existsSync(file.path)) {
-          await fs.promises.unlink(file.path);
-          console.log(`Deleted temp file: ${file.path}`);
-        } else {
-          console.warn(`Temp file not found: ${file.path}`);
-        }
+//         return {
+//           link: req.body[`link${index + 1}`],
+//           img: uploadedImage.secure_url,
+//         };
+//       })
+//     );
 
-        return {
-          link: req.body[`link${index + 1}`],
-          img: uploadedImage.secure_url,
-        };
-      })
-    );
+//     // ✅ Save to DB
+//     const newAdvertisement = await Advertisement.create({
+//       img1: imageData[0],
+//       img2: imageData[1],
+//       img3: imageData[2],
+//     });
 
-    // **Step 3: Save new advertisements**
-    const newAdvertisement = await Advertisement.create({
-      img1: imageData[0],
-      img2: imageData[1],
-      img3: imageData[2],
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "New advertisements saved successfully",
-      data: newAdvertisement,
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
+//     return res.status(201).json({
+//       success: true,
+//       message: "New advertisements saved successfully",
+//       data: newAdvertisement,
+//     });
+//   } catch (error) {
+//     console.error("Error uploading advertisement:", error);
+//     return res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 // export const addAdvertisement = async (req, res) => {
 //   try {
@@ -120,6 +116,71 @@ export const addAdvertisement = async (req, res) => {
 //     res.status(500).json({ success: false, message: error.message });
 //   }
 // };
+
+export const addAdvertisement = async (req, res) => {
+  try {
+    const { img1, img2, img3 } = req.files;
+
+    const { link1, link2, link3 } = req.body;
+
+    if (!img1 || !img2 || !img3) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All 3 images are required" });
+    }
+
+    if (!link1 || !link2 || !link3) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All 3 links are required" });
+    }
+
+    // ✅ Check if any advertisements already exist
+    const existingAds = await Advertisement.find();
+
+    if (existingAds.length > 0) {
+      await Advertisement.deleteMany();
+      console.log("Old advertisements deleted.");
+    }
+
+    const files = [img1[0], img2[0], img3[0]];
+    console.log(files, "file");
+
+    const links = [link1, link2, link3];
+    console.log(links, "links");
+
+    const imageData = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const uploaded = await uploadToCloudinary(
+        files[i].buffer,
+        files[i].originalname
+      );
+
+      imageData.push({
+        img: uploaded.secure_url,
+        link: links[i],
+      });
+    }
+
+    const newAd = await Advertisement.create({
+      img1: imageData[0],
+      img2: imageData[1],
+      img3: imageData[2],
+    });
+
+    console.log(newAd, "newAd");
+
+    res.status(201).json({
+      success: true,
+      message: "Advertisement uploaded successfully",
+      data: newAd,
+    });
+  } catch (error) {
+    console.error("Upload Error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const getAdvertisements = async (req, res) => {
   try {

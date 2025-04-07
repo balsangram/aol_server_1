@@ -104,52 +104,68 @@ export const action = async (req, res) => {
 
 export const addAction = async (req, res) => {
   try {
-    console.log("Received request file:", req.file); // Debugging file
+    const file = req.file;
+
+    console.log("Received files:", file);
+    console.log("Received body:", req.body);
 
     let imageUrl = null;
-    if (req.file) {
-      const imageUpload = await uploadCloudinary(req.file.path); // Upload image
-      imageUrl = imageUpload.secure_url; // Extract URL from Cloudinary response
+
+    // Handle single image upload (assuming only one image is sent)
+    const imageFile = req.files?.find((file) => file.fieldname === "img");
+    if (imageFile) {
+      const imageUpload = await uploadToCloudinary(
+        imageFile.buffer,
+        imageFile.originalname
+      );
+      imageUrl = imageUpload.secure_url;
     }
 
     let data = req.body;
+
+    // If sent as JSON or application/x-www-form-urlencoded, convert it into array manually
     if (!Array.isArray(data)) {
-      data = [data]; // Convert single object to array
+      data = [data];
     }
 
-    data = data.map((item) => ({
+    // Ensure all properties exist and map them
+    const formattedData = data.map((item) => ({
       usertype: item.usertype,
       action: item.action,
       link: item.link,
-      img: imageUrl, // Store image URL in DB
+      img: imageUrl,
     }));
 
     // Validate data
-    if (!data.every((item) => item.usertype && item.action && item.link)) {
-      return res
-        .status(400)
-        .json({ message: "Missing required fields (usertype, action, link)." });
+    const isValid = formattedData.every(
+      (item) => item.usertype && item.action && item.link
+    );
+    if (!isValid) {
+      return res.status(400).json({
+        message: "Missing required fields (usertype, action, link).",
+      });
     }
 
-    // Insert into DB
-    const newActions = await Action.insertMany(data);
+    const newActions = await Action.insertMany(formattedData);
     console.log("Inserted Actions:", newActions);
 
-    res
-      .status(201)
-      .json({ message: "Actions added successfully", actions: newActions });
+    res.status(201).json({
+      message: "Actions added successfully",
+      actions: newActions,
+    });
   } catch (error) {
     console.error("Error adding action:", error);
     res.status(500).json({ message: error.message });
-  } 
+  }
 };
 
 export const updateAction = async (req, res) => {
   try {
     const { id } = req.params;
     const { usertype, language, action, link } = req.body;
+    const file = req.file;
+    console.log(file, "req.file");
 
-    // Find existing action
     const existingAction = await Action.findById(id);
     if (!existingAction) {
       return res.status(404).json({ message: "Action not found" });
@@ -157,42 +173,54 @@ export const updateAction = async (req, res) => {
 
     let imageUrl = existingAction.img; // Retain old image by default
 
-    // ✅ Handle new image upload (once)
     if (req.file) {
-      try {
-        console.log("Received Image:", {
-          name: req.file.originalname,
-          type: req.file.mimetype,
-          size: req.file.size,
-        });
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+      ); // ✅ Corrected this line
+      imageUrl = result.secure_url; // ✅ Make sure this matches your Cloudinary response
+    }
 
-        const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    // If a new image is uploaded, process it
+    if (req.file?.path) {
+      try {
+        console.log("Received Image:", req.file);
+
+        // Upload to Cloudinary
+        // const imageUpload = await uploadCloudinary(req.file.path);
+        // imageUrl = imageUpload.secure_url;
+        const result = await uploadToCloudinary(
+          req.file.buffer,
+          req.file.originalname
+        ); // ✅ Corrected this line
         imageUrl = result.secure_url;
+
+        // Optional: If you want to delete the old image from Cloudinary
+        // if (existingAction.img) await deleteCloudinaryImage(existingAction.img);
       } catch (uploadError) {
         console.error("Cloudinary Upload Error:", uploadError);
         return res.status(500).json({ message: "Image upload failed" });
       }
     }
 
-    // ✅ Update fields only if present
+    // Update fields (only if they exist in req.body)
     existingAction.usertype = usertype?.trim() || existingAction.usertype;
     existingAction.language = language?.trim() || existingAction.language;
     existingAction.action = action?.trim() || existingAction.action;
     existingAction.link = link?.trim() || existingAction.link;
-    existingAction.img = imageUrl;
+    existingAction.img = imageUrl; // Update image only if changed
 
+    // Save updated document
     await existingAction.save();
 
-    res.status(200).json({
-      message: "Updated successfully",
-      action: existingAction,
-    });
+    res
+      .status(200)
+      .json({ message: "Updated successfully", action: existingAction });
   } catch (error) {
     console.error("Error updating action:", error);
     res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
-
 
 export const deleteAction = async (req, res) => {
   try {
