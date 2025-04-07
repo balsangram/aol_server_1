@@ -1,5 +1,5 @@
 import Head from "../models/Head.model.js";
-import MHead from "../models/MHead.model.js";
+// import MHead from "../models/MHead.model.js";
 // import axios from "axios";
 import translateText from "../utils/translation.js";
 export const displayHeadlines = async (req, res) => {
@@ -62,49 +62,49 @@ export const addHeadlines = async (req, res) => {
 // };
 
 // Controller function
-export const multiAddHeadlines = async (req, res) => {
-  try {
-    const { headline } = req.body;
+// export const multiAddHeadlines = async (req, res) => {
+//   try {
+//     const { headline } = req.body;
+//     if (!headline)
+//       return res.status(400).json({ message: "Headline is required" });
 
-    if (!headline || typeof headline !== "string") {
-      return res
-        .status(400)
-        .json({ message: "Valid English headline is required" });
-    }
+//     const translations = {
+//       en: headline,
+//       hi: await translateText(headline, "hi"),
+//       kn: await translateText(headline, "kn"),
+//       ta: await translateText(headline, "ta"),
+//       te: await translateText(headline, "te"),
+//       gu: await translateText(headline, "gu"),
+//       mr: await translateText(headline, "mr"),
+//       ml: await translateText(headline, "ml"),
+//       pa: await translateText(headline, "pa"),
+//       bn: await translateText(headline, "bn"),
+//       ru: await translateText(headline, "ru"),
+//       es: await translateText(headline, "es"),
+//       zh: await translateText(headline, "zh"),
+//       mn: await translateText(headline, "mn"),
+//       pl: await translateText(headline, "pl"),
+//       bg: await translateText(headline, "bg"),
+//       fr: await translateText(headline, "fr"),
+//       de: await translateText(headline, "de"),
+//       nl: await translateText(headline, "nl"),
+//       it: await translateText(headline, "it"),
+//       pt: await translateText(headline, "pt"),
+//       ja: await translateText(headline, "ja"),
+//       vi: await translateText(headline, "vi"),
+//     };
 
-    // Check if headline already exists
-    const exists = await MHead.findOne({ "headline.en": headline });
-    if (exists) {
-      return res.status(400).json({ message: "This headline already exists" });
-    }
+//     const newHeadline = new MHead({ headline: translations });
+//     await newHeadline.save();
 
-    // Translate into other languages
-    const translations = {
-      hi: await translateText(headline, "hi"),
-      ar: await translateText(headline, "ar"),
-      fr: await translateText(headline, "fr"),
-      es: await translateText(headline, "es"),
-      zh: await translateText(headline, "zh"),
-    };
-
-    const newHead = new MHead({
-      headline: {
-        en: headline,
-        ...translations,
-      },
-    });
-
-    await newHead.save();
-
-    res.status(200).json({
-      message: "Headline translated and saved successfully",
-      data: newHead,
-    });
-  } catch (error) {
-    console.error("multiAddHeadlines error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
+//     res
+//       .status(201)
+//       .json({ message: "Headline added successfully", data: newHeadline });
+//   } catch (error) {
+//     console.error("multiAddHeadlines error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 
 export const updateHeading = async (req, res) => {
   try {

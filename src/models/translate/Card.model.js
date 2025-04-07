@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-const HeadlineSchema = new mongoose.Schema(
+const cardSchema = new mongoose.Schema(
   {
-    headline: {
+    headline: { type: String, required: true },
+    name: {
       en: { type: String, required: true }, // English
       hi: { type: String }, // Hindi
       kn: { type: String }, // Kannada
@@ -27,13 +28,26 @@ const HeadlineSchema = new mongoose.Schema(
       ja: { type: String }, // Japanese
       vi: { type: String }, // Vietnamese
     },
+    link: { type: String },
+    img: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Avoid recompilation error during development
-const MHead = mongoose.models.MHead || mongoose.model("MHead", HeadlineSchema);
+const Card = mongoose.model("Card", cardSchema);
+export default Card;
 
-export default MHead;
+// import mongoose from "mongoose";
+
+// const cardSchema = new mongoose.Schema(
+//   {
+//     headline: { type: String, required: true },
+//     name: { type: String, required: true },
+//     link: { type: String },
+//     img: { type: String },
+//   },
+//   { timestamps: true }
+// );
+
+// const Card = mongoose.model("Card", cardSchema);
+// export default Card;

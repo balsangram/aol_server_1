@@ -1,5 +1,8 @@
 import Action from "../models/Action.model.js";
-import { uploadCloudinary } from "../utils/cloudnary.js";
+// import Action from "../models/translate/Action.model.js";
+// import Action from "../models/translate/Action.model.js";
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
+import translateText from "../utils/translation.js";
 
 export const action = async (req, res) => {
   console.log(req.params, "usertype query"); // Logging query params correctly
@@ -25,6 +28,79 @@ export const action = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+// export const addAction = async (req, res) => {
+//   try {
+//     console.log("Received request file:", req.file);
+//     console.log("req body", req.body);
+
+//     let imageUrl = null;
+//     if (req.file) {
+//       const imageUpload = await uploadCloudinary(req.file.path);
+//       imageUrl = imageUpload.secure_url;
+//     }
+
+//     let data = req.body;
+//     if (!Array.isArray(data)) {
+//       data = [data];
+//     }
+
+//     const translatedData = await Promise.all(
+//       data.map(async (item) => {
+//         const actionText = item.action;
+
+//         // Validate individual fields
+//         if (!item.usertype || !item.action || !item.link) {
+//           throw new Error("Missing required fields (usertype, action, link).");
+//         }
+
+//         const translations = {
+//           en: actionText,
+//           hi: await translateText(actionText, "hi"),
+//           kn: await translateText(actionText, "kn"),
+//           ta: await translateText(actionText, "ta"),
+//           te: await translateText(actionText, "te"),
+//           gu: await translateText(actionText, "gu"),
+//           mr: await translateText(actionText, "mr"),
+//           ml: await translateText(actionText, "ml"),
+//           pa: await translateText(actionText, "pa"),
+//           bn: await translateText(actionText, "bn"),
+//           ru: await translateText(actionText, "ru"),
+//           es: await translateText(actionText, "es"),
+//           zh: await translateText(actionText, "zh"),
+//           mn: await translateText(actionText, "mn"),
+//           pl: await translateText(actionText, "pl"),
+//           bg: await translateText(actionText, "bg"),
+//           fr: await translateText(actionText, "fr"),
+//           de: await translateText(actionText, "de"),
+//           nl: await translateText(actionText, "nl"),
+//           it: await translateText(actionText, "it"),
+//           pt: await translateText(actionText, "pt"),
+//           ja: await translateText(actionText, "ja"),
+//           vi: await translateText(actionText, "vi"),
+//         };
+
+//         return {
+//           usertype: item.usertype,
+//           action: translations, // Save the whole translation object
+//           link: item.link,
+//           img: imageUrl,
+//         };
+//       })
+//     );
+
+//     const newActions = await Action.insertMany(translatedData);
+//     console.log("Inserted Actions:", newActions);
+
+//     res.status(201).json({
+//       message: "Actions added successfully",
+//       actions: newActions,
+//     });
+//   } catch (error) {
+//     console.error("Error adding action:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 
 export const addAction = async (req, res) => {
   try {
@@ -65,20 +141,13 @@ export const addAction = async (req, res) => {
   } catch (error) {
     console.error("Error adding action:", error);
     res.status(500).json({ message: error.message });
-  }
+  } 
 };
-
-import mongoose from "mongoose";
 
 export const updateAction = async (req, res) => {
   try {
     const { id } = req.params;
     const { usertype, language, action, link } = req.body;
-
-    // Validate ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid action ID" });
-    }
 
     // Find existing action
     const existingAction = await Action.findById(id);
@@ -88,41 +157,42 @@ export const updateAction = async (req, res) => {
 
     let imageUrl = existingAction.img; // Retain old image by default
 
-    // If a new image is uploaded, process it
-    if (req.file?.path) {
+    // ✅ Handle new image upload (once)
+    if (req.file) {
       try {
-        console.log("Received Image:", req.file);
+        console.log("Received Image:", {
+          name: req.file.originalname,
+          type: req.file.mimetype,
+          size: req.file.size,
+        });
 
-        // Upload to Cloudinary
-        const imageUpload = await uploadCloudinary(req.file.path);
-        imageUrl = imageUpload.secure_url;
-
-        // Optional: If you want to delete the old image from Cloudinary
-        // if (existingAction.img) await deleteCloudinaryImage(existingAction.img);
+        const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+        imageUrl = result.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary Upload Error:", uploadError);
         return res.status(500).json({ message: "Image upload failed" });
       }
     }
 
-    // Update fields (only if they exist in req.body)
+    // ✅ Update fields only if present
     existingAction.usertype = usertype?.trim() || existingAction.usertype;
     existingAction.language = language?.trim() || existingAction.language;
     existingAction.action = action?.trim() || existingAction.action;
     existingAction.link = link?.trim() || existingAction.link;
-    existingAction.img = imageUrl; // Update image only if changed
+    existingAction.img = imageUrl;
 
-    // Save updated document
     await existingAction.save();
 
-    res
-      .status(200)
-      .json({ message: "Updated successfully", action: existingAction });
+    res.status(200).json({
+      message: "Updated successfully",
+      action: existingAction,
+    });
   } catch (error) {
     console.error("Error updating action:", error);
     res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
+
 
 export const deleteAction = async (req, res) => {
   try {

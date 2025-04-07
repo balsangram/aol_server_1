@@ -11,7 +11,7 @@ import {
   addHeadlines,
   deleteHeading,
   displayHeadlines,
-  multiAddHeadlines,
+  // multiAddHeadlines,
   updateHeading,
 } from "../controllers/head.controller.js";
 import {
@@ -20,6 +20,7 @@ import {
   displayHomeCard,
   removeCard,
   removeHomeCard,
+  searchCard,
   showAllCards,
   updateCard,
   updateHomeCard,
@@ -41,7 +42,7 @@ import {
   addAdvertisement,
   getAdvertisements,
 } from "../controllers/adv.controller.js";
-import UserType from "../models/UserType.model.js";
+// import UserType from "../models/UserType.model.js";
 import {
   action,
   addAction,
@@ -60,11 +61,17 @@ import {
   addSOSNumber,
   getLastSOSNumber,
 } from "../controllers/sosController.js";
+import {
+  addLiveLink,
+  displayLiveLink,
+  stopLiveLink,
+} from "../controllers/liveLink.controller.js";
 
 // Store files in memory instead of disk
 const storage = multer.memoryStorage();
 
 export const upload_V2 = multer({ storage });
+console.log(upload_V2, "upload_V2");
 
 const router = express.Router();
 
@@ -82,10 +89,10 @@ router.delete("/userDelete/:id", deleteCustomer);
 
 // Headings
 router.get("/displayHeading", displayHeadlines);
-router.post("/addHeading", addHeadlines);
+// router.post("/addHeading", addHeadlines);
 // router.post("/addHeading", multiAddHeadlines);
 // router.patch("/updateHeading/:id", updateHeading);
-router.delete("/deleteHeading/:id", deleteHeading);
+// router.delete("/deleteHeading/:id", deleteHeading);
 
 //containers
 router.get("/showAllCards/:headline", showAllCards);
@@ -147,5 +154,13 @@ router.get("/displayPopUp", displayPopUp);
 // notification
 router.post("/sendNotificationToAll", sendNotificationToAll);
 router.post("/deviceToken", saveAndSubscribeToken);
+
+// search
+router.get("/searchCard", searchCard);
+
+// live videos
+router.get("/display_live_link", displayLiveLink);
+router.post("/add_live_link", addLiveLink);
+router.delete("/clear_live_link", stopLiveLink);
 
 export default router;

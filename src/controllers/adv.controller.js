@@ -29,7 +29,11 @@ export const addAdvertisement = async (req, res) => {
 
         console.log(`Uploading ${file.originalname} to Cloudinary...`);
 
-        const uploadedImage = await uploadCloudinary(file.path);
+        // const uploadedImage = await uploadCloudinary(file.path);
+    
+              const imageUpload = await uploadCloudinary(req.file.path); // Upload image
+           
+        
 
         console.log(`Uploaded: ${uploadedImage.secure_url}`);
 

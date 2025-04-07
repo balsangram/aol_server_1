@@ -1,25 +1,56 @@
 import PopUp from "../models/PopUp.js";
-import { uploadCloudinary } from "../utils/cloudnary.js"; // Cloudinary helper function
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js"; // Cloudinary helper function
 
 // Add a new popup (store image in Cloudinary)
+// export const addPopUp = async (req, res) => {
+//   try {
+//     const file = req.file;
+//     console.log(file, "file");
+
+//     if (!file) {
+//       return res.status(400).json({ message: "Image file is required" });
+//     }
+//     // Upload to Cloudinary using buffer
+//     const result = await uploadCloudinary(file.buffer, file.originalname);
+//     console.log("Uploaded to Cloudinary:", result.secure_url);
+
+//     // Remove any existing popups
+//     await PopUp.deleteMany({});
+
+//     // Save new popup
+//     const newPopUp = new PopUp({ img: result.secure_url });
+//     await newPopUp.save();
+
+//     res.status(201).json({ message: "Popup added successfully", newPopUp });
+//   } catch (error) {
+//     console.error("Error adding popup:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const addPopUp = async (req, res) => {
   try {
-    if (!req.file) {
+    const file = req.file;
+    console.log("file : ", file);
+
+    if (!file) {
       return res.status(400).json({ message: "Image file is required" });
     }
 
-    // Upload image to Cloudinary
-    const imageUpload = await uploadCloudinary(req.file.path);
+    // Upload to Cloudinary using buffer
+    const result = await uploadToCloudinary(file.buffer, file.originalname);
+    console.log("Uploaded to Cloudinary:", result);
 
-    // Remove previous popup if exists
+    // Remove any existing popups
     await PopUp.deleteMany({});
 
-    // Add new popup with Cloudinary URL
-    const newPopUp = new PopUp({ img: imageUpload.url });
+    // Save new popup
+    const newPopUp = new PopUp({ img: result.secure_url });
     await newPopUp.save();
 
     res.status(201).json({ message: "Popup added successfully", newPopUp });
   } catch (error) {
+    console.error("Error adding popup:", error);
     res.status(500).json({ message: error.message });
   }
 };

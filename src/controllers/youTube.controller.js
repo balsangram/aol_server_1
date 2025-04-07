@@ -1,5 +1,5 @@
 import YouTube from "../models/Youtube.model.js";
-import { uploadCloudinary } from "../utils/cloudnary.js";
+import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 export const showMobileYoutubeLinks = async (req, res) => {
   try {
     const allLinks = await YouTube.find({ platform: "mobile" });
@@ -11,16 +11,26 @@ export const showMobileYoutubeLinks = async (req, res) => {
 };
 export const addYoutubeLinks = async (req, res) => {
   try {
+    const file = req.file;
+    console.log(file, "file");
+
     const { YouTubeLink, platform } = req.body;
     console.log(req.body, "body", req.file);
 
-    const imageUplode = await uploadCloudinary(req.file.path);
-    console.log("imageUplode", imageUplode);
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+    // const imageUplode = await uploadCloudinary(req.file.path);
+    // console.log("imageUplode", imageUplode);
+    const result = await uploadToCloudinary(file.buffer, file.originalname);
+    console.log("imageUplode", result);
+
+    console.log("req", req.file.img);
 
     const newLink = new YouTube({
       YouTubeLink,
       platform,
-      thumbnail: imageUplode.url,
+      thumbnail: result.secure_url,
     });
     console.log(newLink, "newLink");
     await newLink.save();
