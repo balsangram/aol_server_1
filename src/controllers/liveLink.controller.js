@@ -5,7 +5,7 @@ export const displayLiveLink = async (req, res) => {
     const live = await LiveLink.find();
 
     if (!live || live.length === 0) {
-      return res.status(404).json({ message: "No live links found." });
+      return res.status(404).json({ message: "No live links found.",data:[] });
     }
 
     res
