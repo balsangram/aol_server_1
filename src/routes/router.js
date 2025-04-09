@@ -8,11 +8,11 @@ import {
   updateCustomer,
 } from "../controllers/customer.controller.js";
 import {
-  addHeadlines,
-  deleteHeading,
+  // addHeadlines,
+  // deleteHeading,
   displayHeadlines,
   // multiAddHeadlines,
-  updateHeading,
+  // updateHeading,
 } from "../controllers/head.controller.js";
 import {
   addHomeCard,
@@ -53,6 +53,7 @@ import {
 
 import { addPopUp, displayPopUp } from "../controllers/popUp.controller.js";
 import {
+  countNotification,
   displayAllNotification,
   saveAndSubscribeToken,
   sendNotificationToAll,
@@ -70,7 +71,7 @@ import {
   displayLiveLink,
   stopLiveLink,
 } from "../controllers/liveLink.controller.js";
-import { verifyToken } from "../middleware/verifyToken.js";
+// import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
 
@@ -157,7 +158,7 @@ router.post(
 // router.post("/addAdv", upload_V2.any(), addAdvertisement);
 router.get("/displayAdvertisement", getAdvertisements);
 
-// sos  
+// sos
 router.post("/sos", addSOSNumber);
 router.get("/sos/latest", getLastSOSNumber);
 
@@ -169,7 +170,7 @@ router.get("/displayPopUp", displayPopUp);
 router.post("/sendNotificationToAll", sendNotificationToAll);
 router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
-router.get("/countNotification", countNotification)
+router.get("/countNotification", countNotification);
 
 // search
 router.get("/searchCard", searchCard);
@@ -181,6 +182,5 @@ router.delete("/clear_live_link", stopLiveLink);
 
 router.post("/add_live_date_time", addLiveDateTime);
 router.get("/display_live_date_time", displayLiveDateTime);
-
 
 export default router;
