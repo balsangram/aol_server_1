@@ -169,6 +169,7 @@ router.get("/displayPopUp", displayPopUp);
 router.post("/sendNotificationToAll", sendNotificationToAll);
 router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
+router.get("/countNotification", countNotification)
 
 // search
 router.get("/searchCard", searchCard);
