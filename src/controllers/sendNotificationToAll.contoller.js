@@ -114,6 +114,7 @@ export const saveAndSubscribeToken = async (req, res) => {
 export const displayAllNotification = async (req, res) => {
   try {
     const notifications = await Notification.find().lean();
+    console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
 
     const formatted = notifications.map((n) => {
       const dateObj = new Date(n.createdAt);
@@ -130,6 +131,7 @@ export const displayAllNotification = async (req, res) => {
         time,
       };
     });
+    console.log("🚀 ~ formatted ~ formatted:", formatted);
 
     res.status(200).json(formatted);
   } catch (error) {
