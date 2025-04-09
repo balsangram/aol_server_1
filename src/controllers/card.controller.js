@@ -4,6 +4,32 @@ import HomeCard from "../models/HomeCard.model.js";
 import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 import translateText from "../utils/translation.js";
 
+// searchCard
+
+export const cardSearch = async (req, res) => {
+  try {
+    const { query } = req.query;
+    console.log("🚀 ~ cardSearch ~ query:", query);
+
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    const results = await Card.find({
+      $or: [{ name: { $regex: query, $options: "i" } }],
+    });
+    console.log("🚀 ~ cardSearch ~ results:", results);
+
+    res.status(200).json({
+      message: "Search results fetched successfully",
+      data: results,
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Show All Cards
 export const showAllCards = async (req, res) => {
   try {
@@ -136,7 +162,10 @@ export const updateCard = async (req, res) => {
     let imageUrl = null;
 
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, req.file.originalname); // ✅ Corrected this line
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+      ); // ✅ Corrected this line
       imageUrl = result.secure_url; // ✅ Make sure this matches your Cloudinary response
     }
 
@@ -159,7 +188,6 @@ export const updateCard = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
 
 // export const updateCard = async (req, res) => {
 //   try {

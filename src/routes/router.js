@@ -16,6 +16,7 @@ import {
 } from "../controllers/head.controller.js";
 import {
   addHomeCard,
+  cardSearch,
   createCard,
   displayHomeCard,
   removeCard,
@@ -105,6 +106,7 @@ router.get("/showAllCards/:headline", showAllCards);
 router.post("/createCard", upload_V2.single("img"), createCard);
 router.patch("/updateCard/:id", upload_V2.single("img"), updateCard);
 router.delete("/removeCard/:id", removeCard);
+router.get("/card_search", cardSearch);
 
 router.get("/displayHomeCard", displayHomeCard);
 router.post("/createHomeCard", upload_V2.single("img"), addHomeCard);
