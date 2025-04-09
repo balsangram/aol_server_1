@@ -1,5 +1,6 @@
 import admin from "../../firebase.js";
 import deviceToken from "../models/deviceToken.model.js";
+import Notification from "../models/Notification.model.js";
 
 export const sendNotificationToAll = async (req, res) => {
   const { title, body } = req.body;
@@ -26,6 +27,9 @@ export const sendNotificationToAll = async (req, res) => {
   };
 
   try {
+    const saveNotification = new Notification({ title, body });
+    console.log(saveNotification, "saveNotification");
+    await saveNotification.save();
     const response = await admin.messaging().send(message);
     console.log("✅ Successfully sent message:", response);
 
@@ -104,5 +108,14 @@ export const saveAndSubscribeToken = async (req, res) => {
       message: "Internal server error occurred while processing token.",
       error: error.message || "Unexpected error",
     });
+  }
+};
+
+export const displayAllNotification = async (req, res) => {
+  try {
+    const sendNotification = await Notification.find();
+    res.status(200).json(sendNotification);
+  } catch (error) {
+    console.log(error);
   }
 };

@@ -53,6 +53,7 @@ import {
 
 import { addPopUp, displayPopUp } from "../controllers/popUp.controller.js";
 import {
+  displayAllNotification,
   saveAndSubscribeToken,
   sendNotificationToAll,
 } from "../controllers/sendNotificationToAll.contoller.js";
@@ -156,7 +157,7 @@ router.post(
 // router.post("/addAdv", upload_V2.any(), addAdvertisement);
 router.get("/displayAdvertisement", getAdvertisements);
 
-// sos
+// sos  
 router.post("/sos", addSOSNumber);
 router.get("/sos/latest", getLastSOSNumber);
 
@@ -167,6 +168,7 @@ router.get("/displayPopUp", displayPopUp);
 // notification
 router.post("/sendNotificationToAll", sendNotificationToAll);
 router.post("/deviceToken", saveAndSubscribeToken);
+router.get("/display_notification", displayAllNotification);
 
 // search
 router.get("/searchCard", searchCard);
