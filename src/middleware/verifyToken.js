@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// export const verifyToken = (req, res, next) => {
 export const verifyToken = (req, res, next) => {
   const token = req.header("Authorization");
 
@@ -11,7 +12,10 @@ export const verifyToken = (req, res, next) => {
   }
 
   try {
-    const verified = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
+    const verified = jwt.verify(
+      token.replace("Bearer ", ""),
+      process.env.JWT_SECRET
+    );
     req.user = verified;
     next();
   } catch (error) {

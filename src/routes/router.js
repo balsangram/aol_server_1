@@ -62,16 +62,21 @@ import {
   getLastSOSNumber,
 } from "../controllers/sosController.js";
 import {
+  addLiveDateTime,
   addLiveLink,
+  displayLiveDateTime,
   displayLiveLink,
   stopLiveLink,
 } from "../controllers/liveLink.controller.js";
+import { verifyToken } from "../middleware/verifyToken.js";
+
+// import verifyToken from "../middleware/verifyToken.js";
 
 // Store files in memory instead of disk
 const storage = multer.memoryStorage();
 
 export const upload_V2 = multer({ storage });
-console.log(upload_V2, "upload_V2");
+// console.log(upload_V2, "upload_V2");
 
 const router = express.Router();
 
@@ -168,5 +173,8 @@ router.get("/searchCard", searchCard);
 router.get("/display_live_link", displayLiveLink);
 router.post("/add_live_link", addLiveLink);
 router.delete("/clear_live_link", stopLiveLink);
+
+router.post("/add_live_date_time", addLiveDateTime);
+router.get("/display_live_date_time", displayLiveDateTime);
 
 export default router;
