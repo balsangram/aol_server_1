@@ -53,7 +53,8 @@ import {
 
 import { addPopUp, displayPopUp } from "../controllers/popUp.controller.js";
 import {
-  countNotification,
+  countDeviceTokens,
+  // countNotification,
   displayAllNotification,
   saveAndSubscribeToken,
   sendNotificationToAll,
@@ -170,7 +171,7 @@ router.get("/displayPopUp", displayPopUp);
 router.post("/sendNotificationToAll", sendNotificationToAll);
 router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
-router.get("/countNotification", countNotification);
+router.get("/countDeviceTokens", countDeviceTokens);
 
 // search
 router.get("/searchCard", searchCard);

@@ -113,17 +113,35 @@ export const saveAndSubscribeToken = async (req, res) => {
 
 export const displayAllNotification = async (req, res) => {
   try {
-    const sendNotification = await Notification.find();
-    res.status(200).json(sendNotification);
+    const notifications = await Notification.find().lean();
+
+    const formatted = notifications.map((n) => {
+      const dateObj = new Date(n.createdAt);
+
+      const date = dateObj.toLocaleDateString(); // e.g. 4/9/2025
+
+      const hours = dateObj.getHours().toString().padStart(2, "0");
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const time = `${hours}:${minutes}`; // e.g. 10:45
+
+      return {
+        ...n,
+        date,
+        time,
+      };
+    });
+
+    res.status(200).json(formatted);
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
 
-export const countNotification = async (req, res) => {
+// Better naming if you are counting device tokens
+export const countDeviceTokens = async (req, res) => {
   try {
-    const count = await deviceTokenSchema.countDocuments(); // Count all notifications
-
+    const count = await deviceToken.countDocuments(); // Count all device tokens
     res.status(200).json({ count });
   } catch (error) {
     console.log(error);
