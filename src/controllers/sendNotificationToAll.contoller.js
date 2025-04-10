@@ -49,6 +49,7 @@ export const sendNotificationToAll = async (req, res) => {
 
 export const saveAndSubscribeToken = async (req, res) => {
   const { token } = req.body;
+  console.log(token, "🚀 ~ saveAndSubscribeToken ~ response:", req.body);
 
   // Validate input
   if (!token || typeof token !== "string") {
@@ -113,17 +114,18 @@ export const saveAndSubscribeToken = async (req, res) => {
 
 export const displayAllNotification = async (req, res) => {
   try {
-    const notifications = await Notification.find().lean();
+    const notifications = await Notification.find()
+      .sort({ createdAt: 1 }) // Send oldest first
+      .lean();
+
     console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
 
     const formatted = notifications.map((n) => {
       const dateObj = new Date(n.createdAt);
-
-      const date = dateObj.toLocaleDateString(); // e.g. 4/9/2025
-
+      const date = dateObj.toLocaleDateString();
       const hours = dateObj.getHours().toString().padStart(2, "0");
       const minutes = dateObj.getMinutes().toString().padStart(2, "0");
-      const time = `${hours}:${minutes}`; // e.g. 10:45
+      const time = `${hours}:${minutes}`;
 
       return {
         ...n,
@@ -131,8 +133,8 @@ export const displayAllNotification = async (req, res) => {
         time,
       };
     });
-    console.log("🚀 ~ formatted ~ formatted:", formatted);
 
+    console.log("🚀 ~ formatted ~ formatted:", formatted);
     res.status(200).json(formatted);
   } catch (error) {
     console.log(error);
