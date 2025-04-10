@@ -115,7 +115,7 @@ export const saveAndSubscribeToken = async (req, res) => {
 export const displayAllNotification = async (req, res) => {
   try {
     const notifications = await Notification.find()
-      .sort({ createdAt: 1 }) // Send oldest first
+      .sort({ createdAt: -1 }) // Newest first
       .lean();
 
     console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
