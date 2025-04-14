@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const advSchema = new mongoose.Schema(
   {
+    
     img1: {
       link: { type: String, required: true },
       img: { type: String, required: true },

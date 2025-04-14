@@ -1,15 +1,15 @@
-import admin from "../../firebase.js";
+import admin from "firebase-admin";
 import deviceToken from "../models/deviceToken.model.js";
 import Notification from "../models/Notification.model.js";
 
 export const sendNotificationToAll = async (req, res) => {
   const { title, body } = req.body;
   if (!title || !body) {
-    return res.status(400).json({ message: "fill all the requirement" });
+    return res.status(400).json({ message: "Fill all the required fields" });
   }
 
   const message = {
-    topic: "all",
+    topic: "all", // Send to all devices subscribed to the 'all' topic
     notification: {
       title,
       body,
@@ -29,7 +29,9 @@ export const sendNotificationToAll = async (req, res) => {
   try {
     const saveNotification = new Notification({ title, body });
     console.log(saveNotification, "saveNotification");
-    await saveNotification.save();
+    await saveNotification.save(); // Save notification in the database
+
+    // Send the notification to the 'all' topic
     const response = await admin.messaging().send(message);
     console.log("✅ Successfully sent message:", response);
 
@@ -142,7 +144,6 @@ export const displayAllNotification = async (req, res) => {
   }
 };
 
-// Better naming if you are counting device tokens
 export const countDeviceTokens = async (req, res) => {
   try {
     const count = await deviceToken.countDocuments(); // Count all device tokens

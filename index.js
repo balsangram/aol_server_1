@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
 import router from "./src/routes/router.js";
-import notificationRoutes from "./firebase.js";
+// import notificationRoutes from "./firebase.js";
 // import admin from "./firebase";
 
 dotenv.config();
