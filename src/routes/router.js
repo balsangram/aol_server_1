@@ -72,6 +72,7 @@ import {
 import {
   addLiveLink,
   addLiveNewUpdate,
+  clearnewLive,
   // addLiveDateTime,
   // addLiveLink,
   displayHistoryOfLive,
@@ -212,6 +213,7 @@ router.delete("/clear_live_link", stopLiveLink);
 
 router.post("/add_live_date_time", addLiveNewUpdate);
 router.get("/display_live_date_time", displayLiveNewUpdates);
+router.delete("/clear_live_link_date_time", clearnewLive);
 
 router.get("/displayHistoryOfLive", displayHistoryOfLive);
 

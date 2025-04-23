@@ -134,6 +134,26 @@ export const displayLiveNewUpdates = async (req, res) => {
   }
 };
 
+export const clearnewLive = async (req, res) => {
+  try {
+    const count = await LiveNewUpdate.countDocuments();
+    console.log(count, "count");
+
+    if (count === 0) {
+      return res.status(404).json({ message: "No live link updates found." });
+    }
+
+    await LiveNewUpdate.deleteMany();
+
+    res
+      .status(200)
+      .json({ message: "All live link updates deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting live link updates:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 // export const addLiveDateTime = async (req, res) => {
 //   try {
 //     console.log(req.body, "body");
