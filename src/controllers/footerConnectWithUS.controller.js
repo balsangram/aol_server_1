@@ -33,6 +33,7 @@ export const addContactWithUS = async (req, res) => {
       contactName,
       contactLink,
       contactImage: uploadResult.secure_url,
+      typeName: contactName,
     });
 
     await newContact.save();
@@ -97,5 +98,77 @@ export const deleteContactWithUS = async (req, res) => {
   } catch (error) {
     console.error("Delete error:", error);
     res.status(500).json({ error: "Failed to delete ContactWithUs" });
+  }
+};
+
+export const displayFooterEmail = async (req, res) => {
+  try {
+    const emailEntry = await ContactWithUs.findOne({ typeName: "email" });
+
+    if (!emailEntry) {
+      return res.status(404).json({ message: "Email entry not found" });
+    }
+
+    res.status(200).json({
+      message: "Email entry retrieved successfully.",
+      data: emailEntry,
+    });
+  } catch (error) {
+    console.error("Display error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const displayFooterCall = async (req, res) => {
+  try {
+    const contactEntry = await ContactWithUs.findOne({ typeName: "contact" });
+
+    if (!contactEntry) {
+      return res.status(404).json({ message: "Contact entry not found" });
+    }
+
+    res.status(200).json({
+      message: "Contact entry retrieved successfully.",
+      data: contactEntry,
+    });
+  } catch (error) {
+    console.error("Display error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const displayFooterMessage = async (req, res) => {
+  try {
+    const messageEntry = await ContactWithUs.findOne({ typeName: "chat" });
+
+    if (!messageEntry) {
+      return res.status(404).json({ message: "Chat entry not found" });
+    }
+
+    res.status(200).json({
+      message: "Chat entry retrieved successfully.",
+      data: messageEntry,
+    });
+  } catch (error) {
+    console.error("Display error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+export const displayFooterDrop = async (req, res) => {
+  try {
+    const dropEntry = await ContactWithUs.findOne({ typeName: "drop" });
+
+    if (!dropEntry) {
+      return res.status(404).json({ message: "Drop entry not found" });
+    }
+
+    res.status(200).json({
+      message: "Drop entry retrieved successfully.",
+      data: dropEntry,
+    });
+  } catch (error) {
+    console.error("Display error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 };

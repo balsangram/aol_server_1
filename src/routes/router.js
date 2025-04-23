@@ -90,6 +90,10 @@ import {
   addContactWithUS,
   deleteContactWithUS,
   displayAllContactWithUS,
+  displayFooterCall,
+  displayFooterDrop,
+  displayFooterEmail,
+  displayFooterMessage,
   updateContactWithUS,
 } from "../controllers/footerConnectWithUS.controller.js";
 import {
@@ -228,6 +232,11 @@ router.patch(
 );
 router.delete("/social_media/:id", deleteSocialMedia);
 // contact with us
+
+router.get("/footer_email", displayFooterEmail);
+router.get("/footer_Call", displayFooterCall);
+router.get("/footer_Message", displayFooterMessage);
+router.get("/footer_Drop", displayFooterDrop);
 
 router.get("/contact_with_us", displayAllContactWithUS);
 router.post(

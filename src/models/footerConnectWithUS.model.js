@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const footerContactWithUsSchema = new mongoose.Schema(
   {
+    typeName: {
+      type: String,
+      required: true,
+    },
     contactName: {
       type: String,
       required: true,
