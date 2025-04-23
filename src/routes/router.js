@@ -87,11 +87,13 @@ import {
 // } from "../controllers/socialMedia.controller.js";
 import {
   addContactWithUS,
+  deleteContactWithUS,
   displayAllContactWithUS,
   updateContactWithUS,
 } from "../controllers/footerConnectWithUS.controller.js";
 import {
   addSocialMedia,
+  deleteSocialMedia,
   displayAllSocialMedia,
   updateSocialMedia,
 } from "../controllers/socialMedia.controller.js";
@@ -222,6 +224,7 @@ router.patch(
   upload_V2.single("mediaImage"),
   updateSocialMedia
 );
+router.delete("/social_media/:id", deleteSocialMedia);
 // contact with us
 
 router.get("/contact_with_us", displayAllContactWithUS);
@@ -232,22 +235,8 @@ router.post(
 );
 router.patch(
   "/contact_with_us/:id",
-  upload_V2.single("mediaImage"),
+  upload_V2.single("contactImage"),
   updateContactWithUS
 );
-
-// router.get("/contact_with_us", displayAllContactWithUS);
-
-// router.post(
-//   "/contact_with_us",
-//   upload_V2.single("contactImage"),
-//   addContactWithUS
-// );
-
-// router.patch(
-//   "/contact_with_us/:id",
-//   upload_V2.single("contactImage"),
-//   updateContactWithUS
-// );
-
+router.delete("/contact_with_us/:id", deleteContactWithUS);
 export default router;

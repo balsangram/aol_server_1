@@ -88,3 +88,22 @@ export const updateSocialMedia = async (req, res) => {
     res.status(500).json({ error: "Failed to update social media" });
   }
 };
+
+export const deleteSocialMedia = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedEntry = await socialMediaSchema.findByIdAndDelete(id);
+
+    if (!deletedEntry) {
+      return res.status(404).json({ error: "Social media entry not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Social media entry deleted successfully" });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ error: "Failed to delete social media entry" });
+  }
+};

@@ -80,3 +80,22 @@ export const updateContactWithUS = async (req, res) => {
     res.status(500).json({ error: "Failed to update contact entry." });
   }
 };
+
+export const deleteContactWithUS = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedEntry = await ContactWithUs.findByIdAndDelete(id);
+
+    if (!deletedEntry) {
+      return res.status(404).json({ error: "ContactWithUs entry not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "ContactWithUs entry deleted successfully" });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ error: "Failed to delete ContactWithUs" });
+  }
+};
