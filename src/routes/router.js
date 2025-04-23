@@ -49,7 +49,7 @@ import {
   addAction,
   deleteAction,
   updateAction,
-} from "../controllers/action.contoller.js";
+} from "../controllers/action.contoller.controller.js";
 
 import { addPopUp, displayPopUp } from "../controllers/popUp.controller.js";
 import {
@@ -58,13 +58,13 @@ import {
   displayAllNotification,
   saveAndSubscribeToken,
   sendNotificationToAll,
-} from "../controllers/sendNotificationToAll.contoller.js";
+} from "../controllers/sendNotificationToAll.controller.js";
 
 import multer from "multer";
 import {
   addSOSNumber,
   getLastSOSNumber,
-} from "../controllers/sosController.js";
+} from "../controllers/sosController.controller.js";
 import {
   addLiveDateTime,
   addLiveLink,
@@ -72,14 +72,32 @@ import {
   displayLiveLink,
   stopLiveLink,
 } from "../controllers/liveLink.controller.js";
+// import {
+//   // addAllSocialMedia,
+//   // displayAllSocialMedia,
+//   // updateAllSocialMedia,
+// } from "../controllers/socialMedia.controller.js";
+import {
+  addContactWithUS,
+  displayAllContactWithUS,
+  updateContactWithUS,
+} from "../controllers/footerConnectWithUS.controller.js";
+import {
+  addSocialMedia,
+  displayAllSocialMedia,
+  updateSocialMedia,
+} from "../controllers/socialMedia.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
 
 // Store files in memory instead of disk
-const storage = multer.memoryStorage();
+// const storage = multer.memoryStorage();
 
+// export const upload_V2 = multer({ storage });
+const storage = multer.memoryStorage();
 export const upload_V2 = multer({ storage });
+
 // console.log(upload_V2, "upload_V2");
 
 const router = express.Router();
@@ -183,5 +201,29 @@ router.delete("/clear_live_link", stopLiveLink);
 
 router.post("/add_live_date_time", addLiveDateTime);
 router.get("/display_live_date_time", displayLiveDateTime);
+
+// footer  =====
+// social media handel
+router.get("/social_media", displayAllSocialMedia);
+router.post("/social_media", upload_V2.single("mediaImage"), addSocialMedia);
+router.patch(
+  "/social_media/:id",
+  upload_V2.single("mediaImage"),
+  updateSocialMedia
+);
+// contact with us
+
+router.get("/contact_with_us", displayAllContactWithUS);
+router.post(
+  "/contact_with_us",
+  upload_V2.single("contactImage"),
+  addContactWithUS
+);
+
+router.patch(
+  "/contact_with_us/:id",
+  upload_V2.single("contactImage"),
+  updateContactWithUS
+);
 
 export default router;
