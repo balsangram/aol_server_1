@@ -51,7 +51,11 @@ import {
   updateAction,
 } from "../controllers/action.contoller.controller.js";
 
-import { addPopUp, displayPopUp } from "../controllers/popUp.controller.js";
+import {
+  addPopUp,
+  displayAllPopUp,
+  displayPopUp,
+} from "../controllers/popUp.controller.js";
 import {
   countDeviceTokens,
   // countNotification,
@@ -66,10 +70,14 @@ import {
   getLastSOSNumber,
 } from "../controllers/sosController.controller.js";
 import {
-  addLiveDateTime,
   addLiveLink,
-  displayLiveDateTime,
+  addLiveNewUpdate,
+  // addLiveDateTime,
+  // addLiveLink,
+  displayHistoryOfLive,
+  // displayLiveDateTime,
   displayLiveLink,
+  displayLiveNewUpdates,
   stopLiveLink,
 } from "../controllers/liveLink.controller.js";
 // import {
@@ -184,6 +192,7 @@ router.get("/sos/latest", getLastSOSNumber);
 //pop-up
 router.post("/addPopUp", upload_V2.single("img"), addPopUp);
 router.get("/displayPopUp", displayPopUp);
+router.get("/displayAllPopUp", displayAllPopUp);
 
 // notification
 router.post("/sendNotificationToAll", sendNotificationToAll);
@@ -199,8 +208,10 @@ router.get("/display_live_link", displayLiveLink);
 router.post("/add_live_link", addLiveLink);
 router.delete("/clear_live_link", stopLiveLink);
 
-router.post("/add_live_date_time", addLiveDateTime);
-router.get("/display_live_date_time", displayLiveDateTime);
+router.post("/add_live_date_time", addLiveNewUpdate);
+router.get("/display_live_date_time", displayLiveNewUpdates);
+
+router.get("/displayHistoryOfLive", displayHistoryOfLive);
 
 // footer  =====
 // social media handel
@@ -219,11 +230,24 @@ router.post(
   upload_V2.single("contactImage"),
   addContactWithUS
 );
-
 router.patch(
   "/contact_with_us/:id",
-  upload_V2.single("contactImage"),
+  upload_V2.single("mediaImage"),
   updateContactWithUS
 );
+
+// router.get("/contact_with_us", displayAllContactWithUS);
+
+// router.post(
+//   "/contact_with_us",
+//   upload_V2.single("contactImage"),
+//   addContactWithUS
+// );
+
+// router.patch(
+//   "/contact_with_us/:id",
+//   upload_V2.single("contactImage"),
+//   updateContactWithUS
+// );
 
 export default router;

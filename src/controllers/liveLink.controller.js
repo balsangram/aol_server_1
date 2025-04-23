@@ -1,5 +1,8 @@
 import LiveLink from "../models/LiveLink.js";
 import LiveDateTime from "../models/LiveDateTiem.js";
+import LiveLinkHistory from "../models/history/historyLiveLink.model.js";
+import LiveNewUpdate from "../models/LiveNewUpdate.model.js";
+// import { messaging } from "firebase-admin";
 
 export const displayLiveLink = async (req, res) => {
   try {
@@ -56,66 +59,152 @@ export const stopLiveLink = async (req, res) => {
   try {
     const existingLinks = await LiveLink.find();
 
-    if (existingLinks.length > 0) {
-      await LiveLink.deleteMany({});
-      return res
-        .status(200)
-        .json({ message: "Live link stopped successfully." });
-    } else {
+    if (!existingLinks.length) {
       return res.status(404).json({ message: "No live link found to stop." });
     }
+
+    // Step 1: Prepare history entries
+    const historyEntries = existingLinks.map((link) => ({
+      ...link.toObject(),
+      stoppedAt: new Date(), // optional: track when it was stopped
+    }));
+
+    // Step 2: Save to LiveLinkHistory
+    await LiveLinkHistory.insertMany(historyEntries);
+
+    // Step 3: Delete from LiveLink collection
+    await LiveLink.deleteMany();
+
+    res
+      .status(200)
+      .json({ message: "Live links stopped and saved to history." });
   } catch (error) {
-    console.error(error);
+    console.error("Error stopping live link:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
 
-export const addLiveDateTime = async (req, res) => {
+export const addLiveNewUpdate = async (req, res) => {
   try {
     console.log(req.body, "body");
 
     // Step 1: Delete existing entries
-    await LiveDateTime.deleteMany({});
+    await LiveNewUpdate.deleteMany({});
 
     // Step 2: Validate and add new entry
-    const { date, time } = req.body;
-    if (!date || !time) {
-      return res.status(400).json({ message: "Date and Time are required" });
+    const { content } = req.body;
+    if (!content) {
+      return res.status(400).json({ message: "Content is required" });
     }
 
-    const newEntry = new LiveDateTime({ date, time });
+    const newEntry = new LiveNewUpdate({ content });
     console.log(newEntry, "newEntry");
 
     const savedEntry = await newEntry.save();
 
     // Step 3: Respond to client
     res.status(200).json({
-      message: "Live date and time added successfully",
+      message: "Live new update added successfully",
       data: savedEntry,
     });
   } catch (error) {
-    console.error("Error saving live date and time:", error);
+    console.error("Error saving live new update:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
 
-export const displayLiveDateTime = async (req, res) => {
+export const displayLiveNewUpdates = async (req, res) => {
   try {
-    const live = await LiveDateTime.find();
+    const updates = await LiveNewUpdate.find().sort({ createdAt: -1 });
 
-    if (!live || live.length === 0) {
-      return res.status(404).json({
-        message: "No live date/time found.",
+    if (!updates || updates.length === 0) {
+      return res.status(200).json({
+        message: "No live updates found.",
         data: [],
       });
     }
 
     res.status(200).json({
-      message: "Live date/time fetched successfully.",
-      data: live,
+      message: "Live updates fetched successfully.",
+      data: updates,
     });
   } catch (error) {
-    console.error("Error fetching live date/time:", error);
+    console.error("Error fetching live updates:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+// export const addLiveDateTime = async (req, res) => {
+//   try {
+//     console.log(req.body, "body");
+
+//     // Step 1: Delete existing entries
+//     await LiveDateTime.deleteMany({});
+
+//     // Step 2: Validate and add new entry
+//     const { date, time } = req.body;
+//     if (!date || !time) {
+//       return res.status(400).json({ message: "Date and Time are required" });
+//     }
+
+//     const newEntry = new LiveDateTime({ date, time });
+//     console.log(newEntry, "newEntry");
+
+//     const savedEntry = await newEntry.save();
+
+//     // Step 3: Respond to client
+//     res.status(200).json({
+//       message: "Live date and time added successfully",
+//       data: savedEntry,
+//     });
+//   } catch (error) {
+//     console.error("Error saving live date and time:", error);
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// };
+
+// export const displayLiveDateTime = async (req, res) => {
+//   try {
+//     const live = await LiveDateTime.find();
+
+//     if (!live || live.length === 0) {
+//       return res.status(404).json({
+//         message: "No live date/time found.",
+//         data: [],
+//       });
+//     }
+
+//     res.status(200).json({
+//       message: "Live date/time fetched successfully.",
+//       data: live,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching live date/time:", error);
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// };
+
+// display all live history
+
+export const displayHistoryOfLive = async (req, res) => {
+  try {
+    const historyEntries = await LiveLinkHistory.find().sort({ stoppedAt: -1 });
+
+    const formattedEntries = historyEntries.map((entry) => {
+      const stoppedAt = new Date(entry.stoppedAt || entry.createdAt); // fallback for older data
+      return {
+        ...entry.toObject(),
+        date: stoppedAt.toLocaleDateString(), // e.g., "4/23/2025"
+        time: stoppedAt.toLocaleTimeString(), // e.g., "10:30:15 AM"
+      };
+    });
+
+    res.status(200).json({
+      message: "Previous lives are:",
+      data: formattedEntries,
+    });
+  } catch (error) {
+    console.error("Error fetching live history:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };

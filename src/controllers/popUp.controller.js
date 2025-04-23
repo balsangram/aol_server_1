@@ -42,7 +42,7 @@ export const addPopUp = async (req, res) => {
     console.log("Uploaded to Cloudinary:", result);
 
     // Remove any existing popups
-    await PopUp.deleteMany({});
+    // await PopUp.deleteMany({});
 
     // Save new popup
     const newPopUp = new PopUp({ img: result.secure_url });
@@ -65,6 +65,29 @@ export const displayPopUp = async (req, res) => {
     }
 
     res.status(200).json(latestPopUp);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const displayAllPopUp = async (req, res) => {
+  try {
+    const allPopUp = await PopUp.find().sort({ createdAt: -1 });
+
+    // Format each popup with separate date and time fields
+    const formattedPopUps = allPopUp.map((popup) => {
+      const createdAt = new Date(popup.createdAt);
+      const formattedDate = createdAt.toLocaleDateString(); // e.g., "4/23/2025"
+      const formattedTime = createdAt.toLocaleTimeString(); // e.g., "10:30:15 AM"
+
+      return {
+        ...popup.toObject(),
+        date: formattedDate,
+        time: formattedTime,
+      };
+    });
+
+    res.status(200).json(formattedPopUps);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
