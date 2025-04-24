@@ -202,12 +202,10 @@ export const getAdvertisements = async (req, res) => {
 export const displayHistoryOfAdvertisement = async (req, res) => {
   try {
     const advertisementHistory = await HistoryAdvertise.find();
-    res
-      .status(200)
-      .json({
-        message: "previous advertisements are : ",
-        advertisementHistory,
-      });
+    res.status(200).json({
+      message: "previous advertisements are : ",
+      advertisementHistory,
+    });
   } catch (error) {
     res
       .status(500)
