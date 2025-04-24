@@ -1,6 +1,7 @@
 import fs from "fs";
 import Advertisement from "../models/Adv.model.js";
 import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
+import HistoryAdvertise from "../models/history/HistoryAdvertise.model.js";
 
 // export const addAdvertisement = async (req, res) => {
 //   try {
@@ -120,9 +121,9 @@ import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 export const addAdvertisement = async (req, res) => {
   try {
     const { img1, img2, img3 } = req.files;
-
     const { link1, link2, link3 } = req.body;
 
+    // Validate files and links
     if (!img1 || !img2 || !img3) {
       return res
         .status(400)
@@ -135,20 +136,22 @@ export const addAdvertisement = async (req, res) => {
         .json({ success: false, message: "All 3 links are required" });
     }
 
-    // ✅ Check if any advertisements already exist
+    // Check for existing advertisements
     const existingAds = await Advertisement.find();
 
     if (existingAds.length > 0) {
+      // Store previous ads in HistoryAdvertise before deletion
+      await HistoryAdvertise.create({
+        archivedAds: existingAds,
+        archivedAt: new Date(),
+      });
+
       await Advertisement.deleteMany();
-      console.log("Old advertisements deleted.");
+      console.log("Old advertisements archived and deleted.");
     }
 
     const files = [img1[0], img2[0], img3[0]];
-    console.log(files, "file");
-
     const links = [link1, link2, link3];
-    console.log(links, "links");
-
     const imageData = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -163,13 +166,12 @@ export const addAdvertisement = async (req, res) => {
       });
     }
 
+    // Create new advertisement
     const newAd = await Advertisement.create({
       img1: imageData[0],
       img2: imageData[1],
       img3: imageData[2],
     });
-
-    console.log(newAd, "newAd");
 
     res.status(201).json({
       success: true,
@@ -190,6 +192,22 @@ export const getAdvertisements = async (req, res) => {
       count: advertisements.length,
       data: advertisements,
     });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch advertisements" });
+  }
+};
+
+export const displayHistoryOfAdvertisement = async (req, res) => {
+  try {
+    const advertisementHistory = await HistoryAdvertise.find();
+    res
+      .status(200)
+      .json({
+        message: "previous advertisements are : ",
+        advertisementHistory,
+      });
   } catch (error) {
     res
       .status(500)

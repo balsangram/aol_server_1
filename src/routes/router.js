@@ -41,6 +41,7 @@ import {
 } from "../controllers/youTube.controller.js";
 import {
   addAdvertisement,
+  displayHistoryOfAdvertisement,
   getAdvertisements,
 } from "../controllers/adv.controller.js";
 // import UserType from "../models/UserType.model.js";
@@ -182,7 +183,7 @@ router.post(
   ]),
   addAdvertisement
 );
-
+router.get("/advertisement_history", displayHistoryOfAdvertisement);
 // router.post(
 //   "/addAdv",
 //   upload_V2.array("images", 3), // 👈 Accepts 3 files under the "images" field
