@@ -118,38 +118,106 @@ import HistoryAdvertise from "../models/history/HistoryAdvertise.model.js";
 //   }
 // };
 
+// export const addAdvertisement = async (req, res) => {
+//   try {
+//     const { img1, img2, img3 } = req.files;
+//     const { link1, link2, link3 } = req.body;
+
+//     // Validate files and links
+//     if (!img1 || !img2 || !img3) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All 3 images are required" });
+//     }
+
+//     if (!link1 || !link2 || !link3) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "All 3 links are required" });
+//     }
+
+//     // Check for existing advertisements
+//     const existingAds = await Advertisement.find();
+
+//     if (existingAds.length > 0) {
+//       // Store previous ads in HistoryAdvertise before deletion
+//       await HistoryAdvertise.create({
+//         archivedAds: existingAds,
+//         archivedAt: new Date(),
+//       });
+
+//       await Advertisement.deleteMany();
+//       console.log("Old advertisements archived and deleted.");
+//     }
+
+//     const files = [img1[0], img2[0], img3[0]];
+//     const links = [link1, link2, link3];
+//     const imageData = [];
+
+//     for (let i = 0; i < files.length; i++) {
+//       const uploaded = await uploadToCloudinary(
+//         files[i].buffer,
+//         files[i].originalname
+//       );
+
+//       imageData.push({
+//         img: uploaded.secure_url,
+//         link: links[i],
+//       });
+//     }
+
+//     // Create new advertisement
+//     const newAd = await Advertisement.create({
+//       img1: imageData[0],
+//       img2: imageData[1],
+//       img3: imageData[2],
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Advertisement uploaded successfully",
+//       data: newAd,
+//     });
+//   } catch (error) {
+//     console.error("Upload Error:", error.message);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const addAdvertisement = async (req, res) => {
   try {
     const { img1, img2, img3 } = req.files;
     const { link1, link2, link3 } = req.body;
 
-    // Validate files and links
+    // Check all 3 images and links are present
     if (!img1 || !img2 || !img3) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All 3 images are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All 3 images are required",
+      });
     }
 
     if (!link1 || !link2 || !link3) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All 3 links are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All 3 links are required",
+      });
     }
 
-    // Check for existing advertisements
+    // Step 1: Archive existing advertisements if any
     const existingAds = await Advertisement.find();
 
     if (existingAds.length > 0) {
-      // Store previous ads in HistoryAdvertise before deletion
       await HistoryAdvertise.create({
         archivedAds: existingAds,
         archivedAt: new Date(),
       });
 
       await Advertisement.deleteMany();
-      console.log("Old advertisements archived and deleted.");
+      console.log("Previous advertisements archived and deleted.");
     }
 
+    // Step 2: Upload new images to Cloudinary
     const files = [img1[0], img2[0], img3[0]];
     const links = [link1, link2, link3];
     const imageData = [];
@@ -166,7 +234,7 @@ export const addAdvertisement = async (req, res) => {
       });
     }
 
-    // Create new advertisement
+    // Step 3: Save new advertisement
     const newAd = await Advertisement.create({
       img1: imageData[0],
       img2: imageData[1],
@@ -180,7 +248,10 @@ export const addAdvertisement = async (req, res) => {
     });
   } catch (error) {
     console.error("Upload Error:", error.message);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error: " + error.message,
+    });
   }
 };
 
@@ -201,11 +272,10 @@ export const getAdvertisements = async (req, res) => {
 
 export const displayHistoryOfAdvertisement = async (req, res) => {
   try {
-    const advertisementHistory = await HistoryAdvertise.find();
-    res.status(200).json({
-      message: "previous advertisements are : ",
-      advertisementHistory,
-    });
+    const historyOfAdvertisement = await HistoryAdvertise.find();
+    res
+      .status(200)
+      .json({ message: "display all advertisement ", historyOfAdvertisement });
   } catch (error) {
     res
       .status(500)
