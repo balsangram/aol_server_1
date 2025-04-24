@@ -120,7 +120,7 @@ export const displayLiveNewUpdates = async (req, res) => {
     if (!updates || updates.length === 0) {
       return res.status(200).json({
         message: "No live updates found.",
-        data: [],
+        data: [{ content: "" }],
       });
     }
 

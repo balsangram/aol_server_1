@@ -4,7 +4,6 @@ const footerContactWithUsSchema = new mongoose.Schema(
   {
     typeName: {
       type: String,
-      required: true,
     },
     contactName: {
       type: String,

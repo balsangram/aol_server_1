@@ -5,6 +5,9 @@ const youtubeSchema = new mongoose.Schema(
     thumbnail: {
       type: String,
     },
+    thumbnailName: {
+      type: String,
+    },
     YouTubeLink: {
       type: String,
       required: true, // Ensures a link is always provided
