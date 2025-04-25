@@ -23,7 +23,7 @@ export const displayOnBoarding = async (req, res) => {
 
 export const addOnBoarding = async (req, res) => {
   try {
-    const { title, body } = req.body;
+    // const { title, body } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -40,8 +40,8 @@ export const addOnBoarding = async (req, res) => {
 
     const newOnBoarding = await OnBoarding.create({
       img: uploadedImage.secure_url,
-      title,
-      body,
+      //   title,
+      //   body,
     });
 
     res.status(201).json({
