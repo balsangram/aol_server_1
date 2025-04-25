@@ -187,9 +187,8 @@ import HistoryAdvertise from "../models/history/HistoryAdvertise.model.js";
 export const addAdvertisement = async (req, res) => {
   try {
     const { img1, img2, img3 } = req.files;
-    const { link1, link2, link3 } = req.body;
+    const { link1, link2, link3, title1, title2, title3 } = req.body;
 
-    // Check all 3 images and links are present
     if (!img1 || !img2 || !img3) {
       return res.status(400).json({
         success: false,
@@ -204,7 +203,13 @@ export const addAdvertisement = async (req, res) => {
       });
     }
 
-    // Step 1: Archive existing advertisements if any
+    if (!title1 || !title2 || !title3) {
+      return res.status(400).json({
+        success: false,
+        message: "All 3 titles are required",
+      });
+    }
+
     const existingAds = await Advertisement.find();
 
     if (existingAds.length > 0) {
@@ -217,9 +222,9 @@ export const addAdvertisement = async (req, res) => {
       console.log("Previous advertisements archived and deleted.");
     }
 
-    // Step 2: Upload new images to Cloudinary
     const files = [img1[0], img2[0], img3[0]];
     const links = [link1, link2, link3];
+    const titles = [title1, title2, title3];
     const imageData = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -231,10 +236,10 @@ export const addAdvertisement = async (req, res) => {
       imageData.push({
         img: uploaded.secure_url,
         link: links[i],
+        title: titles[i],
       });
     }
 
-    // Step 3: Save new advertisement
     const newAd = await Advertisement.create({
       img1: imageData[0],
       img2: imageData[1],

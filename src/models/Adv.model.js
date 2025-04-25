@@ -2,18 +2,20 @@ import mongoose from "mongoose";
 
 const advSchema = new mongoose.Schema(
   {
-    
     img1: {
       link: { type: String, required: true },
       img: { type: String, required: true },
+      title: { type: String, required: true },
     },
     img2: {
       link: { type: String, required: true },
       img: { type: String, required: true },
+      title: { type: String, required: true },
     },
     img3: {
       link: { type: String, required: true },
       img: { type: String, required: true },
+      title: { type: String, required: true },
     },
   },
   { timestamps: true }
