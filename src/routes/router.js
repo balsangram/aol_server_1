@@ -103,6 +103,10 @@ import {
   displayAllSocialMedia,
   updateSocialMedia,
 } from "../controllers/socialMedia.controller.js";
+import {
+  addOnBoarding,
+  displayOnBoarding,
+} from "../controllers/flutter/onBoading.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -251,4 +255,8 @@ router.patch(
   updateContactWithUS
 );
 router.delete("/contact_with_us/:id", deleteContactWithUS);
+
+// OnBoarding images
+router.get("/display_On_Boarding", displayOnBoarding);
+router.post("/add_On_Boarding", upload_V2.single("img"), addOnBoarding);
 export default router;
