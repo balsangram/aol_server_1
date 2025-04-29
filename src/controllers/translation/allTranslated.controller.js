@@ -43,10 +43,14 @@ export const get_Cards = async (req, res) => {
 
 export const get_action = async (req, res) => {
   try {
-    const { usertype } = req.params;
+    const { usertype, language } = req.params;
 
     if (!usertype) {
       return res.status(400).json({ message: "Usertype is required" });
+    }
+
+    if (!language) {
+      return res.status(400).json({ message: "Language is required" });
     }
 
     const actions = await Action.find({ usertype });
@@ -57,7 +61,38 @@ export const get_action = async (req, res) => {
         .json({ message: "No actions found for this usertype" });
     }
 
-    res.status(200).json(actions);
+    const translatedActions = await Promise.all(
+      actions.map(async (action) => {
+        try {
+          const translatedDescription = await translateText(
+            action.description,
+            language
+          );
+          const translatedName = await translateText(action.action, language);
+          const translatedUserType = await translateText(
+            action.usertype,
+            language
+          );
+
+          return {
+            ...action.toObject(),
+            description: translatedDescription || action.description,
+            action: translatedName || action.action,
+            usertype: translatedUserType || action.usertype, // fallback if translation fails
+          };
+        } catch (translationError) {
+          console.error("Translation error:", translationError);
+          return {
+            ...action.toObject(),
+            description: action.description, // fallback to original if translation fails
+            action: action.action, // fallback to original if translation fails
+            usertype: action.usertype, // fallback to original if translation fails
+          };
+        }
+      })
+    );
+
+    res.status(200).json(translatedActions);
   } catch (error) {
     console.error("Error fetching actions:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -85,6 +120,45 @@ export const get_userType = async (req, res) => {
 
     res.status(200).json(translatedUserType);
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const get_searchCard = async (req, res) => {
+  console.log(req.query, "req.query");
+
+  try {
+    const query = req.query.query;
+    const language = req.params.language || "en"; // Language comes from URL parameter, default to "en"
+
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    // Case-insensitive partial match on name
+    const cards = await Card.find({
+      name: { $regex: query, $options: "i" },
+    });
+
+    const translatedCards = await Promise.all(
+      cards.map(async (card) => {
+        const translatedName = await translateText(card.name, language);
+        const translatedDescription = await translateText(
+          card.description,
+          language
+        );
+
+        return {
+          ...card.toObject(),
+          name: translatedName || card.name,
+          description: translatedDescription || card.description,
+        };
+      })
+    );
+
+    res.status(200).json(translatedCards);
+  } catch (error) {
+    console.error("Error searching and translating cards:", error);
     res.status(500).json({ message: error.message });
   }
 };

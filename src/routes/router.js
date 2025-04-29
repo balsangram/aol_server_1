@@ -111,6 +111,7 @@ import {
   // get__Cards,
   get_action,
   get_Cards,
+  get_searchCard,
   get_userType,
   // get_ExperienceCenterDigitally,
   // get_FacilitiesServicesatCenter,
@@ -280,4 +281,6 @@ router.get("/action_language/:usertype/:language", get_action);
 // userType
 router.get("/userType_language/:language", get_userType);
 
+// search 
+router.get("/searchCard_language/:language", get_searchCard);
 export default router;
