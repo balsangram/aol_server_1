@@ -107,6 +107,16 @@ import {
   addOnBoarding,
   displayOnBoarding,
 } from "../controllers/flutter/onBoading.controller.js";
+import {
+  // get__Cards,
+  get_action,
+  get_Cards,
+  get_userType,
+  // get_ExperienceCenterDigitally,
+  // get_FacilitiesServicesatCenter,
+  // get_StayUpdated,
+  // get_userType,
+} from "../controllers/translation/allTranslated.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -259,4 +269,15 @@ router.delete("/contact_with_us/:id", deleteContactWithUS);
 // OnBoarding images
 router.get("/display_On_Boarding", displayOnBoarding);
 router.post("/add_On_Boarding", upload_V2.single("img"), addOnBoarding);
+
+// translate
+
+// card
+router.get("/Card_language/:headline/:language", get_Cards);
+// action
+router.get("/action_language/:usertype/:language", get_action);
+
+// userType
+router.get("/userType_language/:language", get_userType);
+
 export default router;
