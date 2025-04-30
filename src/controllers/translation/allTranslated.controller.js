@@ -3,11 +3,50 @@ import UserType from "../../models/UserType.model.js";
 import Card from "../../models/Card.model.js";
 import translateText from "../../utils/translation.js";
 
+// export const get_Cards = async (req, res) => {
+//   try {
+//     const { headline, language } = req.params;
+
+//     // Find all cards matching the headline
+//     const cards = await Card.find({ headline });
+
+//     if (!cards || cards.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: `No cards found with headline: ${headline}` });
+//     }
+
+//     // Translate description and name
+//     const translatedCards = await Promise.all(
+//       cards.map(async (card) => {
+//         const translatedDescription = await translateText(
+//           card.description,
+//           language
+//         );
+
+//         const translatedName = await translateText(card.name, language);
+
+//         return {
+//           ...card.toObject(),
+//           description: translatedDescription || card.description,
+//           name: translatedName || card.name,
+//         };
+//       })
+//     );
+
+//     res.status(200).json(translatedCards);
+//   } catch (error) {
+//     console.error("Error fetching or translating cards:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 export const get_Cards = async (req, res) => {
+  console.log("card..");
+
   try {
     const { headline, language } = req.params;
 
-    // Find all cards matching the headline
     const cards = await Card.find({ headline });
 
     if (!cards || cards.length === 0) {
@@ -16,20 +55,13 @@ export const get_Cards = async (req, res) => {
         .json({ message: `No cards found with headline: ${headline}` });
     }
 
-    // Translate description and name
     const translatedCards = await Promise.all(
       cards.map(async (card) => {
-        const translatedDescription = await translateText(
-          card.description,
-          language
-        );
-
         const translatedName = await translateText(card.name, language);
 
         return {
           ...card.toObject(),
-          description: translatedDescription || card.description,
-          name: translatedName || card.name,
+          name: translatedName,
         };
       })
     );
