@@ -2,6 +2,7 @@ import Action from "../../models/Action.model.js";
 import UserType from "../../models/UserType.model.js";
 import Card from "../../models/Card.model.js";
 import translateText from "../../utils/translation.js";
+import LiveNewUpdate from "../../models/LiveNewUpdate.model.js";
 
 // export const get_Cards = async (req, res) => {
 //   try {
@@ -192,5 +193,53 @@ export const get_searchCard = async (req, res) => {
   } catch (error) {
     console.error("Error searching and translating cards:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const get_LiveNewUpdates = async (req, res) => {
+  console.log(req.params, "query");
+
+  const { language = "en" } = req.params; // default to English if not specified
+  console.log(language, "language");
+
+  try {
+    const updates = await LiveNewUpdate.find().sort({ createdAt: -1 });
+
+    if (!updates || updates.length === 0) {
+      return res.status(200).json({
+        message: "No live updates available.",
+        data: [],
+      });
+    }
+
+    // Skip translation if language is English
+    if (language === "en") {
+      console.log("english");
+
+      return res.status(200).json({
+        message: "Live updates fetched successfully.",
+        data: updates,
+      });
+    }
+
+    const translatedUpdates = await Promise.all(
+      updates.map(async (update) => {
+        const translatedContent = await translateText(update.content, language);
+        return {
+          ...update.toObject(),
+          content: translatedContent || update.content, // fallback to original content if translation fails
+        };
+      })
+    );
+
+    res.status(200).json({
+      message: `Live updates translated to '${language}' and fetched successfully.`,
+      data: translatedUpdates,
+    });
+  } catch (error) {
+    console.error("Error fetching live updates:", error);
+    res.status(500).json({
+      message: "Internal server error while fetching live updates.",
+    });
   }
 };

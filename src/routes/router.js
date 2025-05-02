@@ -111,6 +111,7 @@ import {
   // get__Cards,
   get_action,
   get_Cards,
+  get_LiveNewUpdates,
   get_searchCard,
   get_userType,
   // get_ExperienceCenterDigitally,
@@ -281,6 +282,9 @@ router.get("/action_language/:usertype/:language", get_action);
 // userType
 router.get("/userType_language/:language", get_userType);
 
-// search 
+// search
 router.get("/searchCard_language/:language", get_searchCard);
+
+// live new update
+router.get("/display_live_date_time_language/:language", get_LiveNewUpdates);
 export default router;
