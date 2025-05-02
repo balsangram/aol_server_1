@@ -66,6 +66,7 @@ export const get_Cards = async (req, res) => {
         };
       })
     );
+    // console.log(translatedCards, "translatedCards");
 
     res.status(200).json(translatedCards);
   } catch (error) {

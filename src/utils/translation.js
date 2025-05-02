@@ -133,9 +133,8 @@
 //     return convertCharWise(text, targetLang); // fallback on error
 //   }
 // }
-
 import translatte from "translatte";
-import { fallbackCharacterTranslation } from "./FallbackTransliterationFunction.js"; // Import the function & charMaps
+import { fallbackCharacterTranslation } from "./FallbackTransliterationFunction.js";
 
 export default async function translateText(text, targetLang) {
   if (!text || typeof text !== "string" || text.trim() === "") {
@@ -145,12 +144,17 @@ export default async function translateText(text, targetLang) {
 
   try {
     const res = await translatte(text, { to: targetLang });
+    console.log("Translatte result:", res.text);
+
+    const original = text.trim().toLowerCase();
+    const translated = res.text.trim().toLowerCase();
 
     if (
       !res.text ||
-      res.text.trim().toLowerCase() === text.trim().toLowerCase()
+      translated === original ||
+      translated.includes(original.split(" ")[0])
     ) {
-      // Fallback to character-wise transliteration
+      console.log("Using fallback for:", text);
       return fallbackCharacterTranslation(text, targetLang);
     }
 
