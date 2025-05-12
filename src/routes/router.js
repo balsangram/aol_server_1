@@ -121,7 +121,9 @@ import {
 } from "../controllers/translation/allTranslated.controller.js";
 import {
   add_direction,
+  delete_direction,
   get_direction,
+  update_direction,
 } from "../controllers/Direction/direction.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
@@ -295,5 +297,11 @@ router.get("/display_live_date_time_language/:language", get_LiveNewUpdates);
 // direction
 router.get("/display_direction", get_direction);
 router.post("/add_direction", upload_V2.single("directionImg"), add_direction);
+router.patch(
+  "/update_direction/:id",
+  upload_V2.single("directionImg"),
+  update_direction
+);
+router.delete("/delete_direction/:id", delete_direction);
 
 export default router;
