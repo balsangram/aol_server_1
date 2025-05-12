@@ -108,12 +108,10 @@ export const update_direction = async (req, res) => {
       return res.status(404).json({ message: "Direction not found" });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Direction updated successfully",
-        data: updatedDirection,
-      });
+    res.status(200).json({
+      message: "Direction updated successfully",
+      data: updatedDirection,
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to update direction", error });
   }
@@ -134,5 +132,35 @@ export const delete_direction = async (req, res) => {
       .json({ message: "Direction deleted successfully", deletedDirection });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete direction", error });
+  }
+};
+
+export const getNames = async (req, res) => {
+  try {
+    // Fetching all directions but only returning directionName
+    const directions = await Direction.find({}, "directionName"); // This will only fetch the directionName field
+
+    res.status(200).json(directions); // Sending the direction names as a response
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch directions" });
+  }
+};
+
+export const getSingelCard = async (req, res) => {
+  const { cardName } = req.params; // Get the card name from the URL params
+
+  try {
+    // Find a single direction where directionName matches the cardName
+    const direction = await Direction.findOne({ directionName: cardName });
+
+    if (!direction) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Return the found direction
+    res.status(200).json(direction);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch the card" });
   }
 };

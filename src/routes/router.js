@@ -123,6 +123,8 @@ import {
   add_direction,
   delete_direction,
   get_direction,
+  getNames,
+  getSingelCard,
   update_direction,
 } from "../controllers/Direction/direction.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
@@ -303,5 +305,8 @@ router.patch(
   update_direction
 );
 router.delete("/delete_direction/:id", delete_direction);
+
+router.get("/get_direction_names", getNames);
+router.get("/get_perticular_card/:cardName", getSingelCard);
 
 export default router;
