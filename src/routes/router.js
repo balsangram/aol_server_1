@@ -119,6 +119,10 @@ import {
   // get_StayUpdated,
   // get_userType,
 } from "../controllers/translation/allTranslated.controller.js";
+import {
+  add_direction,
+  get_direction,
+} from "../controllers/Direction/direction.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -287,4 +291,9 @@ router.get("/searchCard_language/:language", get_searchCard);
 
 // live new update
 router.get("/display_live_date_time_language/:language", get_LiveNewUpdates);
+
+// direction
+router.get("/display_direction", get_direction);
+router.post("/add_direction", upload_V2.single("directionImg"), add_direction);
+
 export default router;

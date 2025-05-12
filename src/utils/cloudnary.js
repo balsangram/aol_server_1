@@ -31,6 +31,8 @@ cloudinary.config({
 // };
 
 export const uploadToCloudinary = async (fileBuffer, fileName) => {
+  console.log("fileName", fileName);
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -48,6 +50,8 @@ export const uploadToCloudinary = async (fileBuffer, fileName) => {
 };
 
 export const uploadCloudinary = (buffer, filename) => {
+  console.log(filename, "filename");
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
