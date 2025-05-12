@@ -6,6 +6,7 @@ const directionSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
     directionImg: {
       type: String,
