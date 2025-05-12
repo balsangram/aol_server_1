@@ -18,12 +18,12 @@ const directionSchema = new mongoose.Schema(
       trim: true,
     },
     longitude: {
-      type: String,
+      type: Number,
       required: true,
       trim: true,
     },
     latitude: {
-      type: String,
+      type: Number,
       required: true,
       trim: true,
     },
