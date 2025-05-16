@@ -57,13 +57,6 @@ import {
   displayAllPopUp,
   displayPopUp,
 } from "../controllers/popUp.controller.js";
-import {
-  countDeviceTokens,
-  // countNotification,
-  displayAllNotification,
-  saveAndSubscribeToken,
-  sendNotificationToAll,
-} from "../controllers/sendNotificationToAll.controller.js";
 
 import multer from "multer";
 import {
@@ -127,6 +120,26 @@ import {
   getSingelCard,
   update_direction,
 } from "../controllers/Direction/direction.controller.js";
+import {
+  countDeviceTokens,
+  // createGroup,
+  // deleteGroup,
+  displayAllNotification,
+  // displayGroup,
+  displayUser,
+  logoutAndUnsubscribeToken,
+  saveAndSubscribeToken,
+  sendNotificationToAll,
+  sendSingleNotification,
+  // updateGroupUser,
+} from "../controllers/notification/sendNotificationToAll.controller.js";
+import {
+  createGroupWithUser,
+  deleteGroup,
+  // displayGroup,
+  getAllGroupsWithDeviceTokens,
+  updateGroupUser,
+} from "../controllers/notification/group.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -228,9 +241,18 @@ router.get("/displayAllPopUp", displayAllPopUp);
 
 // notification
 router.post("/sendNotificationToAll", sendNotificationToAll);
+router.post("/sendSingleNotification", sendSingleNotification);
 router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
 router.get("/countDeviceTokens", countDeviceTokens);
+router.get("/displayAllUSer", displayUser);
+router.post("/logout", logoutAndUnsubscribeToken);
+
+// group
+router.get("/displayAllGroup", getAllGroupsWithDeviceTokens);
+router.post("/createGroup", createGroupWithUser);
+router.delete("/deleteGroup/:id", deleteGroup);
+router.patch("/updateGroup/:id", updateGroupUser);
 
 // search
 router.get("/searchCard", searchCard);
