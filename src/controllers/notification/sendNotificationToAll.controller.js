@@ -175,8 +175,6 @@ export const sendNotificationToAll = async (req, res) => {
   }
 };
 
-
-
 // send single notification
 
 export const sendSingleNotification = async (req, res) => {
@@ -276,7 +274,7 @@ export const saveAndSubscribeToken = async (req, res) => {
     console.log("Token subscribed to 'all' topic 📡:", response);
 
     // Save token to DB if it doesn't already exist
-    const existing = await deviceToken.findOne({ token });
+    const existing = await DeviceToken.findOne({ token });
     console.log("🚀888 ", username);
     if (!existing) {
       console.log(username, "userName");
