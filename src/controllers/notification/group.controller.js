@@ -17,6 +17,46 @@ export const getAllGroupsWithDeviceTokens = async (req, res) => {
   }
 };
 
+// export const createGroupWithUser = async (req, res) => {
+//   try {
+//     const { groupName, deviceTokenId } = req.body;
+
+//     console.log(req.body);
+//     console.log("groupName:", groupName);
+//     console.log("deviceTokenId:", deviceTokenId);
+
+//     if (
+//       !groupName ||
+//       !Array.isArray(deviceTokenId) ||
+//       deviceTokenId.length === 0
+//     ) {
+//       return res.status(400).json({
+//         message: "groupName and at least one deviceTokenId are required.",
+//       });
+//     }
+
+//     // Optional: Check if all tokens exist (just logging or validating)
+//     const tokens = await DeviceToken.find({ _id: { $in: deviceTokenId } });
+//     if (tokens.length !== deviceTokenId.length) {
+//       return res
+//         .status(404)
+//         .json({ message: "One or more device tokens not found." });
+//     }
+
+//     const group = new Group({
+//       groupName: groupName.trim(),
+//       deviceTokens: deviceTokenId,
+//     });
+
+//     await group.save();
+
+//     res.status(201).json({ message: "Group created successfully", group });
+//   } catch (error) {
+//     console.error("Error creating group:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
 export const createGroupWithUser = async (req, res) => {
   try {
     const { groupName, deviceTokenId } = req.body;
@@ -157,3 +197,4 @@ export const updateGroupUser = async (req, res) => {
     });
   }
 };
+

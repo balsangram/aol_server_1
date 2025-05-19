@@ -13,6 +13,10 @@ const userTypeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    favourite: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

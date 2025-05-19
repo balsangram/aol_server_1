@@ -28,6 +28,7 @@ import {
 } from "../controllers/card.controller.js";
 import {
   addUserType,
+  changeLikeOrDislike,
   deleteUserType,
   updateUserType,
   userType,
@@ -127,8 +128,11 @@ import {
   displayAllNotification,
   // displayGroup,
   displayUser,
+  getUserNotifications,
   logoutAndUnsubscribeToken,
   saveAndSubscribeToken,
+  searchUser,
+  sendGroupNotification,
   sendNotificationToAll,
   sendSingleNotification,
   // updateGroupUser,
@@ -192,6 +196,7 @@ router.get("/userType", userType);
 router.post("/addUserType", upload_V2.single("img"), addUserType);
 router.patch("/updateUSerType/:id", upload_V2.single("img"), updateUserType);
 router.delete("/deleteUSerType/:id", deleteUserType);
+router.post("/userType_importance", changeLikeOrDislike);
 
 //actions
 router.get("/displayAction/:usertype", action);
@@ -248,11 +253,17 @@ router.get("/countDeviceTokens", countDeviceTokens);
 router.get("/displayAllUSer", displayUser);
 router.post("/logout", logoutAndUnsubscribeToken);
 
+router.get("/searchUser", searchUser);
+
+router.get("/notifications/:deviceId", getUserNotifications);
+
 // group
 router.get("/displayAllGroup", getAllGroupsWithDeviceTokens);
 router.post("/createGroup", createGroupWithUser);
 router.delete("/deleteGroup/:id", deleteGroup);
 router.patch("/updateGroup/:id", updateGroupUser);
+
+router.post("/sendGroupNotification", sendGroupNotification);
 
 // search
 router.get("/searchCard", searchCard);

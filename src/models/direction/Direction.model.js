@@ -15,6 +15,11 @@ const directionSchema = new mongoose.Schema(
     },
     directionDescription: {
       type: String,
+      enum: ["Tour and Maps", "Audio Tour only", "All"],
+      default: "Tour and Maps",
+    },
+    directionType: {
+      type: String,
       required: true,
       trim: true,
     },

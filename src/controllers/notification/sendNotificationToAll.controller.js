@@ -112,8 +112,10 @@
 //   }
 // };
 
+import moment from "moment";
 import admin from "../../../firebase.js";
 import DeviceToken from "../../models/notification/deviceToken.model.js";
+import Group from "../../models/notification/Group.model.js";
 import Notification from "../../models/notification/Notification.model.js";
 
 export const sendNotificationToAll = async (req, res) => {
@@ -175,25 +177,140 @@ export const sendNotificationToAll = async (req, res) => {
   }
 };
 
+export const sendGroupNotification = async (req, res) => {
+  try {
+    const { title, body, groupName } = req.body;
+    console.log("Request Body:", req.body);
+
+    // Validate input
+    if (!title || !body || !groupName) {
+      return res.status(400).json({
+        message: "Title, body, and groupName are required.",
+      });
+    }
+
+    // Get group and populate deviceTokens
+    const group = await Group.findOne({ groupName }).populate("deviceTokens");
+    if (!group) {
+      return res.status(404).json({
+        message: `Group '${groupName}' not found.`,
+      });
+    }
+
+    const tokens = group.deviceTokens
+      .filter((dt) => dt.token)
+      .map((dt) => dt.token);
+
+    if (tokens.length === 0) {
+      return res.status(404).json({
+        message: "No valid device tokens found in this group.",
+      });
+    }
+
+    // Create message object
+    const messageTemplate = {
+      notification: { title, body },
+      android: { priority: "high" },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            "content-available": 1,
+          },
+        },
+      },
+      webpush: {
+        notification: { title, body, icon: "icon.png" },
+        fcmOptions: { link: "https://yourwebsite.com" },
+      },
+    };
+
+    // Send notifications one by one (or optimize using sendMulticast)
+    const results = [];
+    const errors = [];
+
+    for (const token of tokens) {
+      try {
+        const response = await admin.messaging().send({
+          ...messageTemplate,
+          token,
+        });
+        results.push({ token, success: true, response });
+      } catch (err) {
+        errors.push({ token, error: err.message });
+      }
+    }
+
+    const successCount = results.length;
+    const failureCount = errors.length;
+
+    console.log(`✅ Group Notification Result:`, {
+      successCount,
+      failureCount,
+    });
+
+    return res.status(200).json({
+      message: `Notifications sent to group '${groupName}': ${successCount} succeeded, ${failureCount} failed.`,
+      firebaseResponse: { successCount, failureCount, errors },
+    });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    return res.status(500).json({
+      message: "Failed to send group notification.",
+      error: error.message || error,
+    });
+  }
+};
+
 // send single notification
 
 export const sendSingleNotification = async (req, res) => {
-  const { title, body, selectedId } = req.body;
+  const { title, body, selectedIds } = req.body;
+  console.log("Request body:", req.body);
 
-  if (!title || !body || !selectedId) {
-    return res
-      .status(400)
-      .json({ message: "Title, body, and user ID are required." });
+  if (
+    !title ||
+    !body ||
+    !Array.isArray(selectedIds) ||
+    selectedIds.length === 0
+  ) {
+    return res.status(400).json({
+      message: "Title, body, and a non-empty array of user IDs are required.",
+    });
   }
 
   try {
-    // Get device token
-    const userTokenDoc = await DeviceToken.findById(selectedId);
-    if (!userTokenDoc || !userTokenDoc.token) {
-      return res.status(404).json({ message: "Device token not found." });
+    // Get device tokens for all selected IDs
+    const userTokenDocs = await DeviceToken.find({ _id: { $in: selectedIds } });
+
+    if (!userTokenDocs || userTokenDocs.length === 0) {
+      return res.status(404).json({
+        message: "No valid device tokens found for the provided IDs.",
+      });
     }
 
-    const payload = {
+    // Filter out documents without tokens and collect valid tokens
+    const tokens = userTokenDocs
+      .filter((doc) => doc.token)
+      .map((doc) => doc.token);
+
+    if (tokens.length === 0) {
+      return res.status(404).json({
+        message: "No valid device tokens found for the provided IDs.",
+      });
+    }
+
+    // Save notification to DB with deviceTokens reference
+    const notification = new Notification({
+      title,
+      body,
+      deviceTokens: userTokenDocs.map((doc) => doc._id),
+    });
+    await notification.save();
+    console.log("✅ Notification saved:", notification);
+
+    // Prepare FCM message
+    const message = {
       notification: {
         title,
         body,
@@ -205,7 +322,7 @@ export const sendSingleNotification = async (req, res) => {
         payload: {
           aps: {
             sound: "default",
-            contentAvailable: true,
+            "content-available": 1,
           },
         },
       },
@@ -215,31 +332,144 @@ export const sendSingleNotification = async (req, res) => {
           body,
           icon: "icon.png",
         },
-        fcmOptions: {
+        fcm_options: {
           link: "https://yourwebsite.com",
         },
       },
     };
 
-    // Send notification to the device
-    const response = await admin
-      .messaging()
-      .sendToDevice(userTokenDoc.token, payload);
-    console.log("✅ Notification sent:", response);
+    // Send notifications individually
+    const results = [];
+    const errors = [];
+    for (const token of tokens) {
+      try {
+        const response = await admin.messaging().send({ ...message, token });
+        results.push({ token, success: true, response });
+      } catch (err) {
+        errors.push({ token, error: err.message });
+      }
+    }
 
-    res.status(200).json({
-      message: "Notification sent successfully.",
-      firebaseResponse: response,
+    const successCount = results.length;
+    const failureCount = errors.length;
+
+    console.log("📢 Notifications sent:", { successCount, failureCount });
+
+    return res.status(200).json({
+      message: `Notifications sent: ${successCount} succeeded, ${failureCount} failed.`,
+      firebaseResponse: {
+        successCount,
+        failureCount,
+        errors,
+      },
+      notificationSaved: notification,
     });
   } catch (error) {
-    console.error("❌ Error sending notification:", error);
-    res.status(500).json({
-      message: "Failed to send notification.",
+    console.error("❌ Error sending notifications:", error);
+    return res.status(500).json({
+      message: "Failed to send notifications.",
       error: error.message,
     });
   }
 };
 
+// export const sendSingleNotification = async (req, res) => {
+//   const { title, body, selectedIds } = req.body;
+//   console.log("Request body:", req.body);
+
+//   if (
+//     !title ||
+//     !body ||
+//     !Array.isArray(selectedIds) ||
+//     selectedIds.length === 0
+//   ) {
+//     return res.status(400).json({
+//       message: "Title, body, and a non-empty array of user IDs are required.",
+//     });
+//   }
+
+//   try {
+//     // Get device tokens for all selected IDs
+//     const userTokenDocs = await DeviceToken.find({ _id: { $in: selectedIds } });
+
+//     if (!userTokenDocs || userTokenDocs.length === 0) {
+//       return res.status(404).json({
+//         message: "No valid device tokens found for the provided IDs.",
+//       });
+//     }
+
+//     // Filter out documents without tokens and collect valid tokens
+//     const tokens = userTokenDocs
+//       .filter((doc) => doc.token)
+//       .map((doc) => doc.token);
+
+//     if (tokens.length === 0) {
+//       return res.status(404).json({
+//         message: "No valid device tokens found for the provided IDs.",
+//       });
+//     }
+
+//     const message = {
+//       notification: {
+//         title,
+//         body,
+//       },
+//       android: {
+//         priority: "high",
+//       },
+//       apns: {
+//         payload: {
+//           aps: {
+//             sound: "default",
+//             "content-available": 1,
+//           },
+//         },
+//       },
+//       webpush: {
+//         notification: {
+//           title,
+//           body,
+//           icon: "icon.png",
+//         },
+//         fcm_options: {
+//           link: "https://yourwebsite.com",
+//         },
+//       },
+//     };
+
+//     // Send notifications individually
+//     const results = [];
+//     const errors = [];
+//     for (const token of tokens) {
+//       try {
+//         const response = await admin.messaging().send({ ...message, token });
+//         results.push({ token, success: true, response });
+//       } catch (err) {
+//         errors.push({ token, error: err.message });
+//       }
+//     }
+
+//     const successCount = results.length;
+//     const failureCount = errors.length;
+
+//     console.log("✅ Notifications sent:", { successCount, failureCount });
+
+//     res.status(200).json({
+//       message: `Notifications sent: ${successCount} succeeded, ${failureCount} failed.`,
+//       firebaseResponse: {
+//         successCount,
+//         failureCount,
+//         errors,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("❌ Error sending notifications:", error);
+//     res.status(500).json({
+//       message: "Failed to send notifications.",
+//       error: error.message,
+//     });
+//   }
+// };
 // send group notification
 
 export const saveAndSubscribeToken = async (req, res) => {
@@ -276,6 +506,7 @@ export const saveAndSubscribeToken = async (req, res) => {
     // Save token to DB if it doesn't already exist
     const existing = await DeviceToken.findOne({ token });
     console.log("🚀888 ", username);
+    console.log("🚀 ~ saveAndSubscribeToken ~ existing:", existing);
     if (!existing) {
       console.log(username, "userName");
       await DeviceToken.create({ token, username, phone, email });
@@ -288,6 +519,7 @@ export const saveAndSubscribeToken = async (req, res) => {
     res.status(200).json({
       message: "Token saved and subscribed to topic 'all' successfully.",
       firebaseResponse: response,
+      existing,
     });
   } catch (error) {
     // Specific error handling
@@ -424,13 +656,11 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
   const { token } = req.body;
   console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", req.body);
 
-  // Validate input
   if (!token || typeof token !== "string") {
     return res.status(400).json({ message: "Valid device token is required." });
   }
 
   try {
-    // Unsubscribe the token from 'all' topic
     const response = await admin.messaging().unsubscribeFromTopic(token, "all");
 
     if (!response || response.failureCount > 0) {
@@ -448,8 +678,8 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
 
     console.log("Token unsubscribed from 'all' topic ❌📡:", response);
 
-    // Delete token from MongoDB
-    const deletionResult = await deviceToken.deleteOne({ token });
+    // ✅ Fix: use the correctly imported model
+    const deletionResult = await DeviceToken.deleteOne({ token });
 
     if (deletionResult.deletedCount === 0) {
       return res.status(404).json({ message: "Token not found in database." });
@@ -483,5 +713,159 @@ export const displayUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching device tokens:", error);
     res.status(500).json({ message: "Failed to fetch device tokens" });
+  }
+};
+
+// single notification
+
+// export const getUserNotifications = async (req, res) => {
+//   const { deviceId } = req.params;
+
+//   try {
+//     const notifications = await Notification.find({
+//       deviceTokens: deviceId,
+//     }).sort({ createdAt: -1 }); // Sort by most recent
+
+//     if (!notifications.length) {
+//       return res.status(404).json({ message: "No notifications found." });
+//     }
+
+//     return res.status(200).json({
+//       message: "Notifications fetched successfully.",
+//       data: notifications,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching user notifications:", error);
+//     return res.status(500).json({
+//       message: "Failed to fetch notifications.",
+//       error: error.message,
+//     });
+//   }
+// };
+
+export const getUserNotifications = async (req, res) => {
+  const { deviceId } = req.params;
+  console.log("📱 Received deviceId:", deviceId);
+
+  try {
+    // Step 1: Get device from DB
+    const device = await DeviceToken.findOne({ _id: deviceId.trim() }); // Trim extra spaces just in case
+
+    console.log("🚀 ~ getUserNotifications ~ device:", !device);
+    if (!device) {
+      return res.status(404).json({ message: "Device not registered." });
+    }
+
+    const deviceCreatedAt = device.createdAt;
+    console.log("📅 Device registered at:", deviceCreatedAt);
+
+    // Step 2: Get notifications created AFTER device registration
+    const notifications = await Notification.find({
+      createdAt: { $gte: deviceCreatedAt },
+    }).sort({ createdAt: -1 });
+
+    // Step 3: Filter global or targeted notifications
+    const filteredNotifications = notifications.filter(
+      (notification) =>
+        notification.deviceTokens.length === 0 || // Global
+        notification.deviceTokens.includes(deviceId) // Targeted to this device
+    );
+
+    // Step 4: Format notification output
+    const formattedNotifications = filteredNotifications.map(
+      (notification) => ({
+        _id: notification._id,
+        title: notification.title,
+        body: notification.body,
+        deviceTokens: notification.deviceTokens,
+        createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+        updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
+      })
+    );
+
+    return res.status(200).json({
+      message: formattedNotifications.length
+        ? "Notifications fetched successfully."
+        : "No new notifications found.",
+      data: formattedNotifications,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching notifications:", error);
+    return res.status(500).json({
+      message: "Server error while fetching notifications.",
+      error: error.message,
+    });
+  }
+};
+
+// export const getUserNotifications = async (req, res) => {
+//   const { deviceId } = req.params;
+
+//   try {
+//     const notifications = await Notification.find().sort({ createdAt: -1 });
+//     const filteredNotifications = notifications.filter(
+//       (notification) =>
+//         notification.deviceTokens.length === 0 ||
+//         notification.deviceTokens.includes(deviceId)
+//     );
+
+//     const formattedNotifications = filteredNotifications.map(
+//       (notification) => ({
+//         _id: notification._id,
+//         title: notification.title,
+//         body: notification.body,
+//         deviceTokens: notification.deviceTokens,
+//         createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+//         updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
+//       })
+//     );
+
+//     return res.status(200).json({
+//       message: formattedNotifications.length
+//         ? "Notifications fetched successfully."
+//         : "No notifications found.",
+//       data: formattedNotifications,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching user notifications:", error);
+//     return res.status(500).json({
+//       message: "Failed to fetch notifications.",
+//       error: error.message,
+//     });
+//   }
+// };
+
+// search user
+export const searchUser = async (req, res) => {
+  try {
+    const { username, email, phone } = req.query;
+
+    if (!username && !email && !phone) {
+      return res.status(400).json({
+        message:
+          "Please provide at least one search parameter (username, email, or phone).",
+      });
+    }
+
+    const searchCriteria = [];
+
+    if (username) {
+      searchCriteria.push({ username: { $regex: username, $options: "i" } });
+    }
+
+    if (email) {
+      searchCriteria.push({ email: { $regex: email, $options: "i" } });
+    }
+
+    if (phone) {
+      searchCriteria.push({ phone: { $regex: phone, $options: "i" } });
+    }
+
+    const users = await DeviceToken.find({ $or: searchCriteria });
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error in searchUser:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 };

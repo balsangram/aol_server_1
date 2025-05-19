@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "node --watch index.js",
-  "seed": "node seed/adminSeed.js"
+    "seed": "node seed/adminSeed.js"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +25,7 @@
     "firebase": "^11.6.0",
     "firebase-admin": "^13.2.0",
     "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
     "mongoose": "^8.12.1",
     "multer": "^1.4.5-lts.2",
     "seed": "^0.4.4",

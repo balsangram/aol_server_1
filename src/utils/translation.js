@@ -133,6 +133,41 @@
 //     return convertCharWise(text, targetLang); // fallback on error
 //   }
 // }
+
+// ====== 19-05 =======================
+
+// import translatte from "translatte";
+// import { fallbackCharacterTranslation } from "./FallbackTransliterationFunction.js";
+
+// export default async function translateText(text, targetLang) {
+//   if (!text || typeof text !== "string" || text.trim() === "") {
+//     console.warn("Skipped translation: Invalid text:", text);
+//     return null;
+//   }
+
+//   try {
+//     const res = await translatte(text, { to: targetLang });
+//     console.log("Translatte result:", res.text);
+
+//     const original = text.trim().toLowerCase();
+//     const translated = res.text.trim().toLowerCase();
+
+//     if (
+//       !res.text ||
+//       translated === original ||
+//       translated.includes(original.split(" ")[0])
+//     ) {
+//       console.log("Using fallback for:", text);
+//       return fallbackCharacterTranslation(text, targetLang);
+//     }
+
+//     return res.text;
+//   } catch (error) {
+//     console.error("Translation Error:", error);
+//     return fallbackCharacterTranslation(text, targetLang);
+//   }
+// }
+
 import translatte from "translatte";
 import { fallbackCharacterTranslation } from "./FallbackTransliterationFunction.js";
 
@@ -140,6 +175,11 @@ export default async function translateText(text, targetLang) {
   if (!text || typeof text !== "string" || text.trim() === "") {
     console.warn("Skipped translation: Invalid text:", text);
     return null;
+  }
+
+  // If target language is English, just return the original text (no translation)
+  if (targetLang.toLowerCase() === "en") {
+    return text;
   }
 
   try {
