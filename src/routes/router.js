@@ -30,6 +30,7 @@ import {
   addUserType,
   changeLikeOrDislike,
   deleteUserType,
+  singleuserType,
   updateUserType,
   userType,
 } from "../controllers/userType.controller.js";
@@ -193,10 +194,13 @@ router.delete("/removeHomeCard/:id", removeHomeCard);
 
 //user Types
 router.get("/userType", userType);
+router.get("/userType/:id", singleuserType);
 router.post("/addUserType", upload_V2.single("img"), addUserType);
 router.patch("/updateUSerType/:id", upload_V2.single("img"), updateUserType);
 router.delete("/deleteUSerType/:id", deleteUserType);
-router.post("/userType_importance", changeLikeOrDislike);
+
+// favorite
+router.post("/userType_importance/:id", changeLikeOrDislike);
 
 //actions
 router.get("/displayAction/:usertype", action);

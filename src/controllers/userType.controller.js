@@ -1,6 +1,7 @@
 import UserType from "../models/UserType.model.js";
 import Action from "../models/Action.model.js";
 import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
+import DeviceToken from "../models/notification/deviceToken.model.js";
 // import { parse } from "dotenv";
 // Show All Cards
 export const userType = async (req, res) => {
@@ -119,27 +120,68 @@ export const deleteUserType = async (req, res) => {
   }
 };
 
+// export const changeLikeOrDislike = async (req, res) => {
+//   try {
+//     const { id } = req.body;
+
+//     if (!id) {
+//       return res.status(400).json({ message: "UserType ID is required." });
+//     }
+
+//     const userType = await UserType.findById(id);
+
+//     if (!userType) {
+//       return res.status(404).json({ message: "UserType not found." });
+//     }
+
+//     // Toggle the favourite field
+//     userType.favourite = !userType.favourite;
+//     await userType.save();
+
+//     return res.status(200).json({
+//       message: "Favourite status updated successfully.",
+//       data: userType,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error toggling favourite:", error);
+//     return res.status(500).json({
+//       message: "Internal server error.",
+//       error: error.message,
+//     });
+//   }
+// };
+
 export const changeLikeOrDislike = async (req, res) => {
   try {
-    const { id } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ message: "UserType ID is required." });
+    const { id } = req.params; // Assuming you're passing `id` in the route parameter
+    const { userId } = req.body;
+    const exist = await DeviceToken.findById(id);
+    const exisstUserId = await UserType.findById(userId);
+    if (!exist) {
+      return res.status(404).json({ message: "Device not found." });
     }
-
-    const userType = await UserType.findById(id);
-
-    if (!userType) {
+    if (!exisstUserId) {
       return res.status(404).json({ message: "UserType not found." });
     }
 
-    // Toggle the favourite field
-    userType.favourite = !userType.favourite;
-    await userType.save();
+    if (!exist.userTypes.some((id) => id.toString() === userId)) {
+      console.log("not available");
+      exist.userTypes.push(userId);
+      await exist.save();
+    } else {
+      console.log("available");
+      // Remove the userId from the array
+      exist.userTypes = exist.userTypes.filter(
+        (id) => id.toString() !== userId
+      );
+      await exist.save();
+    }
 
+    // Continue with further logic here...
     return res.status(200).json({
-      message: "Favourite status updated successfully.",
-      data: userType,
+      message: "DeviceToken found.",
+      data: exist,
+      userType: exisstUserId,
     });
   } catch (error) {
     console.error("❌ Error toggling favourite:", error);
@@ -147,5 +189,16 @@ export const changeLikeOrDislike = async (req, res) => {
       message: "Internal server error.",
       error: error.message,
     });
+  }
+};
+
+export const singleuserType = async (req, res) => {
+  try {
+    console.log("nn");
+
+    const userType = await UserType.find();
+    res.status(200).json(userType);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
