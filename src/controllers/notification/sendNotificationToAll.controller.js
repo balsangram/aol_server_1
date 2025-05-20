@@ -506,7 +506,7 @@ export const saveAndSubscribeToken = async (req, res) => {
     // Save token to DB if it doesn't already exist
     const existing = await DeviceToken.findOne({ token });
     console.log("🚀888 ", username);
-    console.log("🚀 ~ saveAndSubscribeToken ~ existing:", existing);
+
     if (!existing) {
       console.log(username, "userName");
       await DeviceToken.create({ token, username, phone, email });
@@ -515,11 +515,17 @@ export const saveAndSubscribeToken = async (req, res) => {
       console.log("Token already exists in DB 🔁");
     }
 
+    const UserDetails = await DeviceToken.findOne({ token });
+    console.log(
+      "🚀 ~ saveAndSubscribeToken ~ existing:",
+      UserDetails,
+      !UserDetails
+    );
     // Success Response
     res.status(200).json({
       message: "Token saved and subscribed to topic 'all' successfully.",
       firebaseResponse: response,
-      existing,
+      UserDetails,
     });
   } catch (error) {
     // Specific error handling
