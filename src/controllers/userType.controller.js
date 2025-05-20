@@ -154,25 +154,25 @@ export const deleteUserType = async (req, res) => {
 export const changeLikeOrDislike = async (req, res) => {
   try {
     const { id } = req.params; // Assuming you're passing `id` in the route parameter
-    const { userId } = req.body;
+    const { cardId } = req.body;
     const exist = await DeviceToken.findById(id);
-    const exisstUserId = await UserType.findById(userId);
+    const exisstcardId = await UserType.findById(cardId);
     if (!exist) {
       return res.status(404).json({ message: "Device not found." });
     }
-    if (!exisstUserId) {
+    if (!exisstcardId) {
       return res.status(404).json({ message: "UserType not found." });
     }
 
-    if (!exist.userTypes.some((id) => id.toString() === userId)) {
+    if (!exist.userTypes.some((id) => id.toString() === cardId)) {
       console.log("not available");
-      exist.userTypes.push(userId);
+      exist.userTypes.push(cardId);
       await exist.save();
     } else {
       console.log("available");
-      // Remove the userId from the array
+      // Remove the cardId from the array
       exist.userTypes = exist.userTypes.filter(
-        (id) => id.toString() !== userId
+        (id) => id.toString() !== cardId
       );
       await exist.save();
     }
@@ -181,7 +181,7 @@ export const changeLikeOrDislike = async (req, res) => {
     return res.status(200).json({
       message: "DeviceToken found.",
       data: exist,
-      userType: exisstUserId,
+      userType: exisstcardId,
     });
   } catch (error) {
     console.error("❌ Error toggling favourite:", error);
@@ -194,10 +194,29 @@ export const changeLikeOrDislike = async (req, res) => {
 
 export const singleuserType = async (req, res) => {
   try {
-    console.log("nn");
+    const { id } = req.params;
 
-    const userType = await UserType.find();
-    res.status(200).json(userType);
+    // Find device token and populate associated userTypes
+    const user = await DeviceToken.findById(id).select("userTypes");
+
+    if (!user) {
+      return res.status(404).json({ message: "DeviceToken not found" });
+    }
+
+    const userTypes = user.userTypes;
+    console.log("🚀 ~ singleuserType ~ userTypes:", userTypes);
+
+    // const favoriteAuthors = userTypes.filter((u) => u.favourite);
+    // const nonFavoriteAuthors = userTypes.filter((u) => !u.favourite);
+
+    res.status(200).json({
+      totalUserTypes: userTypes.length,
+      // favoriteAuthorsCount: favoriteAuthors.length,
+      // nonFavoriteAuthorsCount: nonFavoriteAuthors.length,
+      // favoriteAuthors,
+      // nonFavoriteAuthors,
+      userTypes,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
