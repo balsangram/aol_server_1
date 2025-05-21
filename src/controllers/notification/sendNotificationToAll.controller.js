@@ -723,19 +723,14 @@ export const displayAllNotification = async (req, res) => {
       .sort({ createdAt: -1 }) // Newest first
       .lean();
 
+    // console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
+
     const formatted = notifications.map((n) => {
       const dateObj = new Date(n.createdAt);
-
-      // Format date and time in IST
-      const date = dateObj.toLocaleDateString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      });
-      const time = dateObj.toLocaleTimeString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false, // 24-hour format
-      });
+      const date = dateObj.toLocaleDateString();
+      const hours = dateObj.getHours().toString().padStart(2, "0");
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const time = `${hours}:${minutes}`;
 
       return {
         ...n,
@@ -744,42 +739,13 @@ export const displayAllNotification = async (req, res) => {
       };
     });
 
+    console.log("🚀 ~ formatted ~ formatted:", formatted);
     res.status(200).json(formatted);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Something went wrong" });
   }
 };
-
-// export const displayAllNotification = async (req, res) => {
-//   try {
-//     const notifications = await Notification.find()
-//       .sort({ createdAt: -1 }) // Newest first
-//       .lean();
-
-//     // console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
-
-//     const formatted = notifications.map((n) => {
-//       const dateObj = new Date(n.createdAt);
-//       const date = dateObj.toLocaleDateString();
-//       const hours = dateObj.getHours().toString().padStart(2, "0");
-//       const minutes = dateObj.getMinutes().toString().padStart(2, "0");
-//       const time = `${hours}:${minutes}`;
-
-//       return {
-//         ...n,
-//         date,
-//         time,
-//       };
-//     });
-
-//     console.log("🚀 ~ formatted ~ formatted:", formatted);
-//     res.status(200).json(formatted);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Something went wrong" });
-//   }
-// };
 
 // Better naming if you are counting device tokens
 export const countDeviceTokens = async (req, res) => {
