@@ -111,8 +111,8 @@
 //     });
 //   }
 // };
-
-import moment from "moment";
+import moment from "moment-timezone";
+// import moment from "moment";
 import admin from "../../../firebase.js";
 import DeviceToken from "../../models/notification/deviceToken.model.js";
 import Group from "../../models/notification/Group.model.js";
