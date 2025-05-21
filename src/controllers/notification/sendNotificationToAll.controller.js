@@ -810,12 +810,38 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
 
 // display all user
 
+// export const displayUser = async (req, res) => {
+//   try {
+//     const devices = await DeviceToken.find();
+//     res.status(200).json({
+//       message: "Device tokens fetched successfully",
+//       data: devices,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching device tokens:", error);
+//     res.status(500).json({ message: "Failed to fetch device tokens" });
+//   }
+// };
+
 export const displayUser = async (req, res) => {
   try {
     const devices = await DeviceToken.find();
+
+    const updatedDevices = devices.map((device) => {
+      return {
+        ...device._doc,
+        createdAtIST: moment(device.createdAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        updatedAtIST: moment(device.updatedAt)
+          .tz("Asia/Kolkata")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      };
+    });
+
     res.status(200).json({
       message: "Device tokens fetched successfully",
-      data: devices,
+      data: updatedDevices,
     });
   } catch (error) {
     console.error("Error fetching device tokens:", error);
