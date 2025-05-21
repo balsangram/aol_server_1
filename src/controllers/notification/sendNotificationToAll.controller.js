@@ -827,15 +827,16 @@ export const displayUser = async (req, res) => {
   try {
     const devices = await DeviceToken.find();
 
+    // Convert all timestamps to IST
     const updatedDevices = devices.map((device) => {
       return {
-        ...device._doc,
-        createdAtIST: moment(device.createdAt)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DD HH:mm:ss"),
-        updatedAtIST: moment(device.updatedAt)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DD HH:mm:ss"),
+        ...device._doc, // get plain object
+        createdAtIST: device.createdAt?.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
+        updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
       };
     });
 
