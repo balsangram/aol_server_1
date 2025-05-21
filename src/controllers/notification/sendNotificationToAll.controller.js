@@ -726,13 +726,9 @@ export const displayAllNotification = async (req, res) => {
     const formatted = notifications.map((n) => {
       const istTime = moment(n.createdAt).tz("Asia/Kolkata");
 
-      const date = istTime.format("YYYY-MM-DD");
-      const time = istTime.format("HH:mm");
-
       return {
         ...n,
-        date,
-        time,
+        dateTime: istTime.format("DD-MM-YYYY HH:mm:ss"), // Updated format
       };
     });
 
