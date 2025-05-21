@@ -985,8 +985,8 @@ export const getUserNotifications = async (req, res) => {
         title: notification.title,
         body: notification.body,
         deviceTokens: notification.deviceTokens,
-        createdAt: createdAtIST.format("YYYY-MM_DD HH:mm:ss"),
-        updatedAt: updatedAtIST.format("YYYY-MM-DD HH:mm:ss"),
+        createdAt: createdAtIST.format("DD-MM-YYYY HH:mm:ss"),
+        updatedAt: updatedAtIST.format("DD-MM-YYYY HH:mm:ss"),
       };
     });
 
