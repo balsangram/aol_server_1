@@ -954,16 +954,73 @@ export const displayUser = async (req, res) => {
 //   }
 // };
 
+// export const getUserNotifications = async (req, res) => {
+//   const { deviceId } = req.params;
+//   console.log("📱 Received deviceId:", deviceId);
+
+//   try {
+//     // Step 1: Get device from DB
+//     const device = await DeviceToken.findOne({ _id: deviceId.trim() }); // Trim extra spaces just in case
+
+//     console.log("🚀 ~ getUserNotifications ~ device:", device);
+//     console.log("🚀 ~ getUserNotifications ~ device:", !device);
+//     if (!device) {
+//       return res.status(404).json({ message: "Device not registered." });
+//     }
+
+//     const deviceCreatedAt = device.createdAt;
+//     console.log("📅 Device registered at:", deviceCreatedAt);
+
+//     // Step 2: Get notifications created AFTER device registration
+//     const notifications = await Notification.find({
+//       createdAt: { $gte: deviceCreatedAt },
+//     }).sort({ createdAt: -1 });
+
+//     // Step 3: Filter global or targeted notifications
+//     const filteredNotifications = notifications.filter(
+//       (notification) =>
+//         notification.deviceTokens.length === 0 || // Global
+//         notification.deviceTokens.includes(deviceId) // Targeted to this device
+//     );
+
+//     // Step 4: Format notification output
+//     const formattedNotifications = filteredNotifications.map(
+//       (notification) => ({
+//         _id: notification._id,
+//         title: notification.title,
+//         body: notification.body,
+//         deviceTokens: notification.deviceTokens,
+//         createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+//         updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
+//       })
+//     );
+
+//     return res.status(200).json({
+//       message: formattedNotifications.length
+//         ? "Notifications fetched successfully."
+//         : "No new notifications found.",
+//       data: formattedNotifications,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching notifications:", error);
+//     return res.status(500).json({
+//       message: "Server error while fetching notifications.",
+//       error: error.message,
+//     });
+//   }
+// };
+
+import moment from "moment-timezone";
+
 export const getUserNotifications = async (req, res) => {
   const { deviceId } = req.params;
   console.log("📱 Received deviceId:", deviceId);
 
   try {
     // Step 1: Get device from DB
-    const device = await DeviceToken.findOne({ _id: deviceId.trim() }); // Trim extra spaces just in case
+    const device = await DeviceToken.findOne({ _id: deviceId.trim() });
 
     console.log("🚀 ~ getUserNotifications ~ device:", device);
-    console.log("🚀 ~ getUserNotifications ~ device:", !device);
     if (!device) {
       return res.status(404).json({ message: "Device not registered." });
     }
@@ -983,17 +1040,20 @@ export const getUserNotifications = async (req, res) => {
         notification.deviceTokens.includes(deviceId) // Targeted to this device
     );
 
-    // Step 4: Format notification output
-    const formattedNotifications = filteredNotifications.map(
-      (notification) => ({
+    // Step 4: Format notification output with IST timezone
+    const formattedNotifications = filteredNotifications.map((notification) => {
+      const createdAtIST = moment(notification.createdAt).tz("Asia/Kolkata");
+      const updatedAtIST = moment(notification.updatedAt).tz("Asia/Kolkata");
+
+      return {
         _id: notification._id,
         title: notification.title,
         body: notification.body,
         deviceTokens: notification.deviceTokens,
-        createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
-        updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-      })
-    );
+        createdAt: createdAtIST.format("DD-MM-YYYY HH:mm:ss"),
+        updatedAt: updatedAtIST.format("DD-MM-YYYY HH:mm:ss"),
+      };
+    });
 
     return res.status(200).json({
       message: formattedNotifications.length
