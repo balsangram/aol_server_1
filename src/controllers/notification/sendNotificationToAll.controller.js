@@ -990,8 +990,8 @@ export const getUserNotifications = async (req, res) => {
         title: notification.title,
         body: notification.body,
         deviceTokens: notification.deviceTokens,
-        createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
-        updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
+        createdAt: moment(notification.createdAt).format("DD-MM-YYYY HH:mm:ss"),
+        updatedAt: moment(notification.updatedAt).format("DD-MM-YYYY HH:mm:ss"),
       })
     );
 
