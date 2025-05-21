@@ -1010,7 +1010,7 @@ export const displayUser = async (req, res) => {
 //   }
 // };
 
-import moment from "moment-timezone";
+// import moment from "moment-timezone";
 
 export const getUserNotifications = async (req, res) => {
   const { deviceId } = req.params;
