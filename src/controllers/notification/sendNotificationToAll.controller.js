@@ -959,41 +959,36 @@ export const getUserNotifications = async (req, res) => {
   console.log("📱 Received deviceId:", deviceId);
 
   try {
-    // Step 1: Get device from DB
-    const device = await DeviceToken.findOne({ _id: deviceId.trim() }); // Trim extra spaces just in case
-
-    console.log("🚀 ~ getUserNotifications ~ device:", device);
-    console.log("🚀 ~ getUserNotifications ~ device:", !device);
+    const device = await DeviceToken.findOne({ _id: deviceId.trim() });
     if (!device) {
       return res.status(404).json({ message: "Device not registered." });
     }
 
     const deviceCreatedAt = device.createdAt;
-    console.log("📅 Device registered at:", deviceCreatedAt);
 
-    // Step 2: Get notifications created AFTER device registration
     const notifications = await Notification.find({
       createdAt: { $gte: deviceCreatedAt },
     }).sort({ createdAt: -1 });
 
-    // Step 3: Filter global or targeted notifications
     const filteredNotifications = notifications.filter(
       (notification) =>
-        notification.deviceTokens.length === 0 || // Global
-        notification.deviceTokens.includes(deviceId) // Targeted to this device
+        notification.deviceTokens.length === 0 ||
+        notification.deviceTokens.includes(deviceId)
     );
 
-    // Step 4: Format notification output
-    const formattedNotifications = filteredNotifications.map(
-      (notification) => ({
+    const formattedNotifications = filteredNotifications.map((notification) => {
+      const createdAtIST = moment(notification.createdAt).tz("Asia/Kolkata");
+      const updatedAtIST = moment(notification.updatedAt).tz("Asia/Kolkata");
+
+      return {
         _id: notification._id,
         title: notification.title,
         body: notification.body,
         deviceTokens: notification.deviceTokens,
-        createdAt: moment(notification.createdAt).format("DD-MM-YYYY HH:mm:ss"),
-        updatedAt: moment(notification.updatedAt).format("DD-MM-YYYY HH:mm:ss"),
-      })
-    );
+        createdAt: createdAtIST.format("DD-MM-YYYY HH:mm:ss"),
+        updatedAt: updatedAtIST.format("DD-MM-YYYY HH:mm:ss"),
+      };
+    });
 
     return res.status(200).json({
       message: formattedNotifications.length
