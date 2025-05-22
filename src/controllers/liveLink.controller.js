@@ -3,51 +3,135 @@ import LiveDateTime from "../models/LiveDateTiem.js";
 import LiveLinkHistory from "../models/history/historyLiveLink.model.js";
 import LiveNewUpdate from "../models/LiveNewUpdate.model.js";
 // import { messaging } from "firebase-admin";
+import { CronJob } from 'cron'; 
+// export const displayLiveLink = async (req, res) => {
+//   try {
+//     const live = await LiveLink.find();
+
+//     if (!live || live.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "No live links found.", data: [] });
+//     }
+
+//     res
+//       .status(200)
+//       .json({ message: "Live link fetched successfully.", data: live });
+//   } catch (error) {
+//     console.error("Error fetching live links:", error);
+//     res.status(500).json({ message: "Internal server error." });
+//   }
+// };
 
 export const displayLiveLink = async (req, res) => {
   try {
-    const live = await LiveLink.find();
-
-    if (!live || live.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No live links found.", data: [] });
-    }
-
-    res
-      .status(200)
-      .json({ message: "Live link fetched successfully.", data: live });
+    const liveLinks = await LiveLink.find({ isLive: true });
+    res.status(200).json({ data: liveLinks });
   } catch (error) {
-    console.error("Error fetching live links:", error);
-    res.status(500).json({ message: "Internal server error." });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// export const addLiveLink = async (req, res) => {
+//   try {
+//     console.log(req.body, "body");
+
+//     // Step 1: Delete existing entries
+//     const existingLinks = await LiveLink.find();
+//     if (existingLinks.length > 0) {
+//       await LiveLink.deleteMany({});
+//     }
+
+//     // Step 2: Validate and add new link
+//     const { link } = req.body;
+//     if (!link) {
+//       return res.status(400).json({ message: "Link is required" });
+//     }
+
+//     const newLink = new LiveLink({ link });
+//     console.log(newLink, "newLink");
+
+//     const savedLink = await newLink.save();
+
+//     // Step 3: Respond to client
+//     res.status(200).json({
+//       message: "Link added successfully",
+//       data: savedLink,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 export const addLiveLink = async (req, res) => {
   try {
     console.log(req.body, "body");
 
-    // Step 1: Delete existing entries
-    const existingLinks = await LiveLink.find();
-    if (existingLinks.length > 0) {
-      await LiveLink.deleteMany({});
+    // Step 1: Delete all existing live links (only one allowed at a time)
+    await LiveLink.deleteMany({});
+
+    // Step 2: Extract link and liveTime
+    const { link, liveTime } = req.body;
+
+    if (!link || !liveTime) {
+      return res
+        .status(400)
+        .json({ message: "Link and liveTime are required" });
     }
 
-    // Step 2: Validate and add new link
-    const { link } = req.body;
-    if (!link) {
-      return res.status(400).json({ message: "Link is required" });
+    const liveDate = new Date(liveTime);
+    console.log("🚀 ~ addLiveLink ~ liveDate:", liveDate);
+    if (isNaN(liveDate.getTime())) {
+      return res.status(400).json({ message: "Invalid liveTime format" });
     }
 
-    const newLink = new LiveLink({ link });
-    console.log(newLink, "newLink");
+    if (liveDate <= new Date()) {
+      return res
+        .status(400)
+        .json({ message: "liveTime must be in the future" });
+    }
 
+    // Step 3: Save new LiveLink with isLive = false
+    const newLink = new LiveLink({
+      link,
+      liveTime: liveDate,
+      isLive: false,
+    });
     const savedLink = await newLink.save();
 
-    // Step 3: Respond to client
+    // Step 4: Schedule a cron job to update isLive when liveTime reached
+    const job = new CronJob(liveDate, async () => {
+      try {
+        const updated = await LiveLink.findByIdAndUpdate(
+          savedLink._id,
+          { isLive: true },
+          { new: true }
+        );
+        console.log("Live link is now live:", updated);
+      } catch (err) {
+        console.error("Error updating live link status:", err);
+      }
+    });
+
+    job.start();
+
+    // Step 5: Convert liveTime to IST for display
+    const liveTimeIST = liveDate.toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    });
+
+    const currentTimeIST = new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    });
+
+    // Step 6: Respond
     res.status(200).json({
-      message: "Link added successfully",
+      message: "Link added and scheduled successfully",
       data: savedLink,
+      liveTimeIST,
+      currentTimeIST,
     });
   } catch (error) {
     console.error(error);

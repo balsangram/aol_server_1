@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
 import router from "./src/routes/router.js";
+import { job } from "./src/utils/cronJobs/updateLiveStatus.js";
 // import notificationRoutes from "./firebase.js";
 // import admin from "./firebase";
 
@@ -18,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // app.use("/auth", authRoutes);
 
 app.use("/aol", router);
+
+job.start();
 
 // app.use('/cards', verifyToken, cardRoutes);
 // app.use('/cards',cardRoutes);
