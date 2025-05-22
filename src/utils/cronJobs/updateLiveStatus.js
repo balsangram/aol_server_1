@@ -9,11 +9,7 @@ export const job = new CronJob("*/5 * * * * *", async () => {
   console.log("UTC time:", now.toISOString());
 
   console.log("⏰ Running cron job at:", now.toLocaleString());
-  // const docs = await LiveLink.find({
-  //   isLive: false,
-  //   liveTime: { $lte: now },
-  // });
-  // console.log(docs);
+
 
   try {
     const updated = await LiveLink.updateMany(

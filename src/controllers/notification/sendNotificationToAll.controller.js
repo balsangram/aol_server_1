@@ -118,64 +118,64 @@ import DeviceToken from "../../models/notification/deviceToken.model.js";
 import Group from "../../models/notification/Group.model.js";
 import Notification from "../../models/notification/Notification.model.js";
 
-export const sendNotificationToAll = async (req, res) => {
-  const { title, body } = req.body;
-  if (!title || !body) {
-    return res.status(400).json({ message: "Fill all the requirements" });
-  }
+// export const sendNotificationToAll = async (req, res) => {
+//   const { title, body } = req.body;
+//   if (!title || !body) {
+//     return res.status(400).json({ message: "Fill all the requirements" });
+//   }
 
-  const message = {
-    topic: "all",
-    notification: {
-      title,
-      body,
-    },
-    android: {
-      priority: "high",
-    },
-    apns: {
-      payload: {
-        aps: {
-          sound: "default",
-          contentAvailable: true, // Make sure the notification wakes up the app (for background handling)
-        },
-      },
-    },
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "icon.png", // Customize the icon for web push notifications
-      },
-      fcmOptions: {
-        link: "https://yourwebsite.com", // Optional: link to open when the user clicks the notification
-      },
-    },
-  };
+//   const message = {
+//     topic: "all",
+//     notification: {
+//       title,
+//       body,
+//     },
+//     android: {
+//       priority: "high",
+//     },
+//     apns: {
+//       payload: {
+//         aps: {
+//           sound: "default",
+//           contentAvailable: true, // Make sure the notification wakes up the app (for background handling)
+//         },
+//       },
+//     },
+//     webpush: {
+//       notification: {
+//         title,
+//         body,
+//         icon: "icon.png", // Customize the icon for web push notifications
+//       },
+//       fcmOptions: {
+//         link: "https://yourwebsite.com", // Optional: link to open when the user clicks the notification
+//       },
+//     },
+//   };
 
-  try {
-    // Save the notification details to your DB
-    const saveNotification = new Notification({ title, body });
-    console.log(saveNotification, "saveNotification");
-    await saveNotification.save();
+//   try {
+//     // Save the notification details to your DB
+//     const saveNotification = new Notification({ title, body });
+//     console.log(saveNotification, "saveNotification");
+//     await saveNotification.save();
 
-    // Send the notification to all devices subscribed to the 'all' topic
-    const response = await admin.messaging().send(message);
-    console.log("✅ Successfully sent message:", response);
+//     // Send the notification to all devices subscribed to the 'all' topic
+//     const response = await admin.messaging().send(message);
+//     console.log("✅ Successfully sent message:", response);
 
-    res.status(200).json({
-      message: "Notification sent successfully to topic 'all'.",
-      firebaseResponse: response,
-    });
-  } catch (error) {
-    console.error("❌ Error sending message:", error);
+//     res.status(200).json({
+//       message: "Notification sent successfully to topic 'all'.",
+//       firebaseResponse: response,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error sending message:", error);
 
-    res.status(500).json({
-      message: "Failed to send notification.",
-      error: error.message || error,
-    });
-  }
-};
+//     res.status(500).json({
+//       message: "Failed to send notification.",
+//       error: error.message || error,
+//     });
+//   }
+// };
 
 // export const sendGroupNotification = async (req, res) => {
 //   try {
@@ -266,6 +266,66 @@ export const sendNotificationToAll = async (req, res) => {
 // };
 
 // send single notification
+
+export const sendNotificationToAll = async (req, res) => {
+  const { title, body } = req.body;
+  if (!title || !body) {
+    return res.status(400).json({ message: "Fill all the requirements" });
+  }
+
+  const message = {
+    topic: "all",
+    notification: {
+      title,
+      body,
+    },
+    android: {
+      priority: "high",
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true, // Make sure the notification wakes up the app (for background handling)
+        },
+      },
+    },
+    webpush: {
+      notification: {
+        title,
+        body,
+        icon: "icon.png", // Customize the icon for web push notifications
+      },
+      fcmOptions: {
+        link: "https://yourwebsite.com", // Optional: link to open when the user clicks the notification
+      },
+    },
+  };
+
+  try {
+    // Save the notification details to your DB
+    const saveNotification = new Notification({ title, body });
+    console.log(saveNotification, "saveNotification");
+    await saveNotification.save();
+
+    // Send the notification to all devices subscribed to the 'all' topic
+    const response = await admin.messaging().send(message);
+    console.log("✅ Successfully sent message:", response);
+
+    res.status(200).json({
+      message: "Notification sent successfully to topic 'all'.",
+      firebaseResponse: response,
+    });
+  } catch (error) {
+    console.error("❌ Error sending message:", error);
+
+    res.status(500).json({
+      message: "Failed to send notification.",
+      error: error.message || error,
+    });
+  }
+};
+
 
 export const sendGroupNotification = async (req, res) => {
   try {

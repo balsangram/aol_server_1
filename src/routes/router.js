@@ -145,6 +145,7 @@ import {
   getAllGroupsWithDeviceTokens,
   updateGroupUser,
 } from "../controllers/notification/group.controller.js";
+import { loginUser } from "../controllers/user/user.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -165,6 +166,9 @@ router.post("/adminRegister", registerAdmin);
 router.post("/adminLogin", loginAdmin);
 // router.patch("/adminUpdayte");
 // router.delete("/adminDelete");
+
+// user 
+router.post("/userLogin", loginUser);
 
 // customer functionality
 router.post("/userRegister", registerCustomer);
