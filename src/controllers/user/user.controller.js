@@ -14,7 +14,7 @@ export const loginUser = async (req, res) => {
 
     if (!emailMatch && !phoneMatch) {
       // 🚪 Allow login if both don't exist in DB
-      return res.status(200).json({ message: "Login allowed (new user)" });
+      return res.status(201).json({ message: "Login allowed (new user)" });
     }
 
     if (emailMatch && phoneMatch) {

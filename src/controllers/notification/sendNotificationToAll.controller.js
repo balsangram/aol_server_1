@@ -898,19 +898,24 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
   }
 
   try {
-    const deletionResult = await DeviceToken.deleteOne({ token });
+    // Find the document by token and update the token field to empty string (or null)
+    const updatedUser = await DeviceToken.findOneAndUpdate(
+      { token },
+      { $set: { token: "" } }, // or use null if you prefer: { token: null }
+      { new: true }
+    );
 
-    if (deletionResult.deletedCount === 0) {
+    if (!updatedUser) {
       return res.status(404).json({ message: "Token not found in database." });
     }
 
-    console.log("Token deleted from DB 🗑️");
+    console.log("Token cleared from user document:", updatedUser);
 
-    res.status(200).json({ message: "Token deleted successfully." });
+    res.status(200).json({ message: "Token cleared successfully." });
   } catch (error) {
-    console.error("Error deleting token:", error);
+    console.error("Error clearing token:", error);
     res.status(500).json({
-      message: "Internal server error while deleting token.",
+      message: "Internal server error while clearing token.",
       error: error.message || "Unexpected error",
     });
   }
