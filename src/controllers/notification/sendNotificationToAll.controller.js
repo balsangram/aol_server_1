@@ -890,6 +890,8 @@ export const countDeviceTokens = async (req, res) => {
 // };
 
 export const logoutAndUnsubscribeToken = async (req, res) => {
+  console.log("came in logout.,..");
+
   const { token } = req.body;
   console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", token);
 
