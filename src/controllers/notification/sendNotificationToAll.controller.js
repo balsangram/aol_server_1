@@ -326,7 +326,6 @@ export const sendNotificationToAll = async (req, res) => {
   }
 };
 
-
 export const sendGroupNotification = async (req, res) => {
   try {
     const { title, body, groupName } = req.body;
@@ -841,33 +840,64 @@ export const countDeviceTokens = async (req, res) => {
 };
 
 // logout
+// export const logoutAndUnsubscribeToken = async (req, res) => {
+//   const { token } = req.body;
+//   console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", req.body);
+
+//   if (!token || typeof token !== "string") {
+//     return res.status(400).json({ message: "Valid device token is required." });
+//   }
+
+//   try {
+//     const response = await admin.messaging().unsubscribeFromTopic(token, "all");
+
+//     if (!response || response.failureCount > 0) {
+//       const errorInfo =
+//         response.errors?.[0]?.error ||
+//         "Unknown error while unsubscribing from topic.";
+
+//       console.log("FCM Unsubscribe Error:", errorInfo);
+
+//       return res.status(400).json({
+//         message: "Failed to unsubscribe token from topic 'all'.",
+//         error: errorInfo,
+//       });
+//     }
+
+//     console.log("Token unsubscribed from 'all' topic ❌📡:", response);
+
+//     // ✅ Fix: use the correctly imported model
+//     const deletionResult = await DeviceToken.deleteOne({ token });
+
+//     if (deletionResult.deletedCount === 0) {
+//       return res.status(404).json({ message: "Token not found in database." });
+//     }
+
+//     console.log("Token deleted from DB 🗑️");
+
+//     res.status(200).json({
+//       message: "Token unsubscribed and deleted successfully.",
+//       firebaseResponse: response,
+//     });
+//   } catch (error) {
+//     console.log("Error in logoutAndUnsubscribeToken:", error);
+
+//     res.status(500).json({
+//       message: "Internal server error occurred during logout.",
+//       error: error.message || "Unexpected error",
+//     });
+//   }
+// };
+
 export const logoutAndUnsubscribeToken = async (req, res) => {
   const { token } = req.body;
-  console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", req.body);
+  console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", token);
 
   if (!token || typeof token !== "string") {
     return res.status(400).json({ message: "Valid device token is required." });
   }
 
   try {
-    const response = await admin.messaging().unsubscribeFromTopic(token, "all");
-
-    if (!response || response.failureCount > 0) {
-      const errorInfo =
-        response.errors?.[0]?.error ||
-        "Unknown error while unsubscribing from topic.";
-
-      console.log("FCM Unsubscribe Error:", errorInfo);
-
-      return res.status(400).json({
-        message: "Failed to unsubscribe token from topic 'all'.",
-        error: errorInfo,
-      });
-    }
-
-    console.log("Token unsubscribed from 'all' topic ❌📡:", response);
-
-    // ✅ Fix: use the correctly imported model
     const deletionResult = await DeviceToken.deleteOne({ token });
 
     if (deletionResult.deletedCount === 0) {
@@ -876,15 +906,11 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
 
     console.log("Token deleted from DB 🗑️");
 
-    res.status(200).json({
-      message: "Token unsubscribed and deleted successfully.",
-      firebaseResponse: response,
-    });
+    res.status(200).json({ message: "Token deleted successfully." });
   } catch (error) {
-    console.log("Error in logoutAndUnsubscribeToken:", error);
-
+    console.error("Error deleting token:", error);
     res.status(500).json({
-      message: "Internal server error occurred during logout.",
+      message: "Internal server error while deleting token.",
       error: error.message || "Unexpected error",
     });
   }
