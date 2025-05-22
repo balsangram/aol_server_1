@@ -268,63 +268,95 @@ import Notification from "../../models/notification/Notification.model.js";
 // send single notification
 
 export const sendNotificationToAll = async (req, res) => {
-  const { title, body } = req.body;
-  if (!title || !body) {
-    return res.status(400).json({ message: "Fill all the requirements" });
-  }
+  const { title, body, NotificationTime } = req.body;
 
-  const message = {
-    topic: "all",
-    notification: {
-      title,
-      body,
-    },
-    android: {
-      priority: "high",
-    },
-    apns: {
-      payload: {
-        aps: {
-          sound: "default",
-          contentAvailable: true, // Make sure the notification wakes up the app (for background handling)
-        },
-      },
-    },
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: "icon.png", // Customize the icon for web push notifications
-      },
-      fcmOptions: {
-        link: "https://yourwebsite.com", // Optional: link to open when the user clicks the notification
-      },
-    },
-  };
+  if (!title || !body || !NotificationTime) {
+    return res
+      .status(400)
+      .json({ message: "Title, body, and NotificationTime are required" });
+  }
 
   try {
     // Save the notification details to your DB
-    const saveNotification = new Notification({ title, body });
+    const saveNotification = new Notification({
+      title,
+      body,
+      NotificationTime: new Date(NotificationTime),
+    });
     console.log(saveNotification, "saveNotification");
     await saveNotification.save();
 
-    // Send the notification to all devices subscribed to the 'all' topic
-    const response = await admin.messaging().send(message);
-    console.log("✅ Successfully sent message:", response);
-
     res.status(200).json({
-      message: "Notification sent successfully to topic 'all'.",
-      firebaseResponse: response,
+      message: "Notification scheduled successfully.",
+      notification: saveNotification,
     });
   } catch (error) {
-    console.error("❌ Error sending message:", error);
-
+    console.error("❌ Error scheduling notification:", error);
     res.status(500).json({
-      message: "Failed to send notification.",
+      message: "Failed to schedule notification.",
       error: error.message || error,
     });
   }
 };
+
+// export const sendNotificationToAll = async (req, res) => {
+//   const { title, body } = req.body;
+//   if (!title || !body) {
+//     return res.status(400).json({ message: "Fill all the requirements" });
+//   }
+
+//   const message = {
+//     topic: "all",
+//     notification: {
+//       title,
+//       body,
+//     },
+//     android: {
+//       priority: "high",
+//     },
+//     apns: {
+//       payload: {
+//         aps: {
+//           sound: "default",
+//           contentAvailable: true, // Make sure the notification wakes up the app (for background handling)
+//         },
+//       },
+//     },
+//     webpush: {
+//       notification: {
+//         title,
+//         body,
+//         icon: "icon.png", // Customize the icon for web push notifications
+//       },
+//       fcmOptions: {
+//         link: "https://yourwebsite.com", // Optional: link to open when the user clicks the notification
+//       },
+//     },
+//   };
+
+//   try {
+//     // Save the notification details to your DB
+//     const saveNotification = new Notification({ title, body });
+//     console.log(saveNotification, "saveNotification");
+//     await saveNotification.save();
+
+//     // Send the notification to all devices subscribed to the 'all' topic
+//     const response = await admin.messaging().send(message);
+//     console.log("✅ Successfully sent message:", response);
+
+//     res.status(200).json({
+//       message: "Notification sent successfully to topic 'all'.",
+//       firebaseResponse: response,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error sending message:", error);
+
+//     res.status(500).json({
+//       message: "Failed to send notification.",
+//       error: error.message || error,
+//     });
+//   }
+// };
 
 export const sendGroupNotification = async (req, res) => {
   try {
