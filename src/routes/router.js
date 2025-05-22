@@ -167,14 +167,14 @@ router.post("/adminLogin", loginAdmin);
 // router.patch("/adminUpdayte");
 // router.delete("/adminDelete");
 
-// user 
+// user
 router.post("/userLogin", loginUser);
 
 // customer functionality
-router.post("/userRegister", registerCustomer);
-router.post("/userLogin", loginCustomer);
-router.patch("/userUpdate/:id", updateCustomer);
-router.delete("/userDelete/:id", deleteCustomer);
+// router.post("/userRegister", registerCustomer);
+// router.post("/userLogin", loginCustomer);
+// router.patch("/userUpdate/:id", updateCustomer);
+// router.delete("/userDelete/:id", deleteCustomer);
 
 // Headings
 router.get("/displayHeading", displayHeadlines);

@@ -1,15 +1,14 @@
 import { CronJob } from "cron";
 import LiveLink from "../../models/LiveLink.js"; // Include .js if using native ES modules
 
-console.log("🚀 Cron job file loaded...");
+// console.log("🚀 Cron job file loaded...");
 
-export const job = new CronJob("*/5 * * * * *", async () => {
+export const job = new CronJob("0 * * * * *", async () => {
   const now = new Date();
-  console.log("Local time:", now.toLocaleString());
-  console.log("UTC time:", now.toISOString());
+  // console.log("Local time:", now.toLocaleString());
+  // console.log("UTC time:", now.toISOString());
 
-  console.log("⏰ Running cron job at:", now.toLocaleString());
-
+  // console.log("⏰ Running cron job at:", now.toLocaleString());
 
   try {
     const updated = await LiveLink.updateMany(
@@ -19,10 +18,10 @@ export const job = new CronJob("*/5 * * * * *", async () => {
       },
       { isLive: true }
     );
-    console.log("🚀 ~ job ~ updated:", updated);
-    console.log("🚀 ~ job ~ LiveLink.updateMany:", LiveLink.updateMany);
+    // console.log("🚀 ~ job ~ updated:", updated);
+    // console.log("🚀 ~ job ~ LiveLink.updateMany:", LiveLink.updateMany);
 
-    console.log("🚀 ~ job ~ updated:", updated.modifiedCount);
+    // console.log("🚀 ~ job ~ updated:", updated.modifiedCount);
     if (updated.modifiedCount > 0) {
       console.log(
         `✅ Updated ${updated.modifiedCount} live link(s) to isLive: true`
