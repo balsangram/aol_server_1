@@ -16,6 +16,7 @@ export const addYoutubeLinks = async (req, res) => {
   try {
     const file = req.file;
     const { YouTubeLink, platform, thumbnailName } = req.body;
+    console.log("🚀 ~ addYoutubeLinks ~ req.body:", req.body);
 
     if (!file) {
       return res.status(400).json({ message: "No file uploaded." });

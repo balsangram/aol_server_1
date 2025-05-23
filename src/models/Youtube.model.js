@@ -4,9 +4,11 @@ const youtubeSchema = new mongoose.Schema(
   {
     thumbnail: {
       type: String,
+      required: true,
     },
     thumbnailName: {
       type: String,
+      required: true,
     },
     YouTubeLink: {
       type: String,

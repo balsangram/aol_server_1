@@ -146,7 +146,10 @@ import {
   updateGroupUser,
 } from "../controllers/notification/group.controller.js";
 import { loginUser } from "../controllers/user/user.controller.js";
-import { addLinkLog, displayLinkLog } from "../controllers/linkLogs/linkLog.controller.js";
+import {
+  addLinkLog,
+  displayLinkLog,
+} from "../controllers/linkLogs/linkLog.controller.js";
 // import { verifyToken } from "../middleware/verifyToken.js";
 
 // import verifyToken from "../middleware/verifyToken.js";
@@ -351,9 +354,9 @@ router.delete("/delete_direction/:id", delete_direction);
 router.get("/get_direction_names", getNames);
 router.get("/get_perticular_card/:cardName", getSingelCard);
 
-// linkLog 
+// linkLog
 
-router.post("/addClick", addLinkLog)
-router.get("/displayClick", displayLinkLog)
+router.post("/addClick", addLinkLog);
+router.get("/displayClick", displayLinkLog);
 
 export default router;

@@ -160,48 +160,96 @@ export const addLinkLog = async (req, res) => {
   }
 };
 
+// export const displayLinkLog = async (req, res) => {
+//   try {
+//     const logs = await LinkLog.aggregate([
+//       { $unwind: "$clicks" }, // unwind clicks array
+//       {
+//         $group: {
+//           _id: {
+//             userId: "$userId",
+//             userName: "$userName",
+//             userEmail: "$userEmail",
+//             userPhone: "$userPhone",
+//             cardId: "$clicks.cardId",
+//             cardName: "$clicks.cardName",
+//           },
+//           clickCount: { $sum: "$clicks.clickCount" },
+//           clickTimes: { $push: "$clicks.clickTimes" },
+//         },
+//       },
+//       {
+//         $sort: {
+//           "_id.userName": 1,
+//           "_id.cardName": 1,
+//         },
+//       },
+//     ]);
+
+//     // Flatten clickTimes array because each clickTimes is an array itself
+//     const results = logs.map((log) => {
+//       const flattenedTimes = log.clickTimes.flat();
+//       return {
+//         userId: log._id.userId,
+//         userName: log._id.userName,
+//         userEmail: log._id.userEmail,
+//         userPhone: log._id.userPhone,
+//         cardId: log._id.cardId,
+//         cardName: log._id.cardName,
+//         clickCount: log.clickCount,
+//         clickTimes: flattenedTimes.map((ts) =>
+//           new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+//         ),
+//       };
+//     });
+
+//     return res.status(200).json({ data: results });
+//   } catch (error) {
+//     console.error("Error displaying link logs:", error);
+//     return res
+//       .status(500)
+//       .json({ message: "Server error", error: error.message });
+//   }
+// };
+
 export const displayLinkLog = async (req, res) => {
   try {
     const logs = await LinkLog.aggregate([
-      { $unwind: "$clicks" }, // unwind clicks array
+      { $unwind: "$clicks" },
+      { $unwind: "$clicks.clickTimes" },
       {
         $group: {
           _id: {
-            userId: "$userId",
-            userName: "$userName",
+            date: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$clicks.clickTimes",
+                timezone: "Asia/Kolkata", // 👈 Indian Time
+              },
+            },
             userEmail: "$userEmail",
-            userPhone: "$userPhone",
-            cardId: "$clicks.cardId",
             cardName: "$clicks.cardName",
           },
-          clickCount: { $sum: "$clicks.clickCount" },
           clickTimes: { $push: "$clicks.clickTimes" },
+          dailyClickCount: { $sum: 1 },
         },
       },
       {
         $sort: {
-          "_id.userName": 1,
+          "_id.date": -1,
+          "_id.userEmail": 1,
           "_id.cardName": 1,
         },
       },
     ]);
 
-    // Flatten clickTimes array because each clickTimes is an array itself
-    const results = logs.map((log) => {
-      const flattenedTimes = log.clickTimes.flat();
-      return {
-        userId: log._id.userId,
-        userName: log._id.userName,
-        userEmail: log._id.userEmail,
-        userPhone: log._id.userPhone,
-        cardId: log._id.cardId,
-        cardName: log._id.cardName,
-        clickCount: log.clickCount,
-        clickTimes: flattenedTimes.map((ts) =>
-          new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-        ),
-      };
-    });
+    const results = logs.map((log) => ({
+      date: log._id.date,
+      userEmail: log._id.userEmail,
+      cardName: log._id.cardName,
+      dailyClickCount: log.dailyClickCount,
+      clickTimes: log.clickTimes,
+    }));
 
     return res.status(200).json({ data: results });
   } catch (error) {
@@ -211,3 +259,47 @@ export const displayLinkLog = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+
+// export const displayLinkLog = async (req, res) => {
+//   try {
+//     const logs = await LinkLog.aggregate([
+//       { $unwind: "$clicks" },
+//       { $unwind: "$clicks.clickTimes" },
+//       {
+//         $group: {
+//           _id: {
+//             date: {
+//               $dateToString: { format: "%Y-%m-%d", date: "$clicks.clickTimes" },
+//             },
+//             userEmail: "$userEmail",
+//             cardName: "$clicks.cardName",
+//           },
+//           clickTimes: { $push: "$clicks.clickTimes" }, // capture each time
+//           dailyClickCount: { $sum: 1 }, // count each occurrence
+//         },
+//       },
+//       {
+//         $sort: {
+//           "_id.date": -1,
+//           "_id.userEmail": 1,
+//           "_id.cardName": 1,
+//         },
+//       },
+//     ]);
+
+//     const results = logs.map((log) => ({
+//       date: log._id.date,
+//       userEmail: log._id.userEmail,
+//       cardName: log._id.cardName,
+//       dailyClickCount: log.dailyClickCount,
+//       clickTimes: log.clickTimes,
+//     }));
+
+//     return res.status(200).json({ data: results });
+//   } catch (error) {
+//     console.error("Error displaying link logs:", error);
+//     return res
+//       .status(500)
+//       .json({ message: "Server error", error: error.message });
+//   }
+// };
