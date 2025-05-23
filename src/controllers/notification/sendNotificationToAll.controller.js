@@ -166,24 +166,166 @@ export const sendNotificationToAll = async (req, res) => {
   }
 };
 
+// export const sendGroupNotification = async (req, res) => {
+//   try {
+//     const { title, body, groupName, NotificationTime } = req.body;
+//     console.log("📦 Incoming Request:", req.body);
+
+//     // 🛡 Validate input
+//     if (!title || !body || !groupName || !NotificationTime) {
+//       return res.status(400).json({
+//         message: "Title, body, groupName, and NotificationTime are required.",
+//       });
+//     }
+
+//     // Validate NotificationTime format
+//     const notificationTime = new Date(NotificationTime);
+//     if (isNaN(notificationTime)) {
+//       return res.status(400).json({
+//         message:
+//           "Invalid NotificationTime format. Use ISO 8601 format (e.g., '2025-05-24T17:50:00.000+00:00').",
+//       });
+//     }
+
+//     // 🔍 Find group and populate device tokens
+//     const group = await Group.findOne({ groupName }).populate("deviceTokens");
+//     console.log("🚀 ~ sendGroupNotification ~ group:", group);
+//     if (!group) {
+//       return res.status(404).json({
+//         message: `Group '${groupName}' not found.`,
+//       });
+//     }
+
+//     // 🎯 Extract valid tokens
+//     const tokens = group.deviceTokens
+//       .filter((dt) => dt.token)
+//       .map((dt) => dt.token);
+//     console.log("🚀 ~ sendGroupNotification ~ tokens:", tokens);
+//     if (tokens.length === 0) {
+//       return res.status(404).json({
+//         message: "No valid device tokens found in this group.",
+//       });
+//     }
+
+//     // 📝 Save notification to DB with deviceTokens and NotificationTime
+//     const savedNotification = new Notification({
+//       title,
+//       body,
+//       deviceTokens: group.deviceTokens.map((dt) => dt._id),
+//       NotificationTime: notificationTime,
+//       sent: true, // Mark as sent since we're sending immediately
+//     });
+//     await savedNotification.save();
+//     console.log(
+//       "🚀 ~ sendGroupNotification ~ savedNotification:",
+//       savedNotification
+//     );
+
+//     // 📤 Notification message template
+//     const messageTemplate = {
+//       notification: { title, body },
+//       android: { priority: "high" },
+//       apns: {
+//         payload: {
+//           aps: {
+//             sound: "default",
+//             "content-available": 1,
+//           },
+//         },
+//       },
+//       webpush: {
+//         notification: { title, body, icon: "icon.png" },
+//         fcmOptions: { link: "https://yourwebsite.com" },
+//       },
+//     };
+
+//     // 🔁 Send notifications
+//     const results = [];
+//     const errors = [];
+
+//     for (const token of tokens) {
+//       try {
+//         const response = await admin.messaging().send({
+//           ...messageTemplate,
+//           token,
+//         });
+//         results.push({ token, success: true, response });
+//       } catch (err) {
+//         errors.push({ token, error: err.message });
+//       }
+//     }
+
+//     // 📊 Summary
+//     const successCount = results.length;
+//     const failureCount = errors.length;
+//     console.log("✅ Notification Summary:", {
+//       group: groupName,
+//       successCount,
+//       failureCount,
+//     });
+
+//     return res.status(200).json({
+//       message: `Notifications sent to group '${groupName}': ${successCount} succeeded, ${failureCount} failed.`,
+//       data: {
+//         successCount,
+//         failureCount,
+//         errors,
+//         notification: savedNotification,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("❌ Error sending group notification:", error);
+//     return res.status(500).json({
+//       message: "Failed to send group notification.",
+//       error: error.message || error,
+//     });
+//   }
+// };
+
 export const sendGroupNotification = async (req, res) => {
   try {
-    const { title, body, groupName } = req.body;
+    const { title, body, groupName, NotificationTime } = req.body;
     console.log("📦 Incoming Request:", req.body);
 
     // 🛡 Validate input
-    if (!title || !body || !groupName) {
+    if (!title || !body || !groupName || !NotificationTime) {
       return res.status(400).json({
-        message: "Title, body, and groupName are required.",
+        message: "Title, body, groupName, and NotificationTime are required.",
       });
     }
 
+    // Validate NotificationTime format
+    const notificationTime = new Date(NotificationTime);
+    if (isNaN(notificationTime)) {
+      return res.status(400).json({
+        message:
+          "Invalid NotificationTime format. Use ISO 8601 format (e.g., '2025-05-24T17:50:00.000+00:00').",
+      });
+    }
+
+    // Convert NotificationTime to IST
+    const istTime = notificationTime.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "full",
+      timeStyle: "long",
+    });
+    console.log("🚀 ~ sendGroupNotification ~ Notification Time IST:", istTime);
+
+    // Capture current time in IST
+    const currentTimeIST = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "full",
+      timeStyle: "long",
+    });
+    console.log(
+      "🚀 ~ sendGroupNotification ~ Current Time IST:",
+      currentTimeIST
+    );
+
     // 🔍 Find group and populate device tokens
     const group = await Group.findOne({ groupName }).populate("deviceTokens");
-
     console.log("🚀 ~ sendGroupNotification ~ group:", group);
     if (!group) {
-      console.log("🚀 ~ sendGroupNotification ~ tokens:", tokens);
       return res.status(404).json({
         message: `Group '${groupName}' not found.`,
       });
@@ -193,160 +335,125 @@ export const sendGroupNotification = async (req, res) => {
     const tokens = group.deviceTokens
       .filter((dt) => dt.token)
       .map((dt) => dt.token);
-
+    console.log("🚀 ~ sendGroupNotification ~ tokens:", tokens);
     if (tokens.length === 0) {
-      console.log(
-        "🚀 ~ sendGroupNotification ~ messageTemplate:",
-        messageTemplate
-      );
-      console.log(
-        "🚀 ~ sendGroupNotification ~ messageTemplate:",
-        messageTemplate
-      );
       return res.status(404).json({
         message: "No valid device tokens found in this group.",
       });
     }
 
-    // if (tokens.length === 0) {
-    //   console.log(
-    //     "🚀 ~ sendGroupNotification ~ messageTemplate:",
-    //     messageTemplate
-    //   );
-    //   console.log(
-    //     "🚀 ~ sendGroupNotification ~ messageTemplate:",
-    //     messageTemplate
-    //   );
-    //   return res.status(404).json({
-    //     message: "No valid device tokens found in this group.",
-    //   });
-    // }
-
-    // 📝 Save notification to DB only once
-    const savedNotification = new Notification({ title, body });
+    // 📝 Save notification to DB with deviceTokens, NotificationTime, and groupName
+    const savedNotification = new Notification({
+      title,
+      body,
+      deviceTokens: group.deviceTokens.map((dt) => dt._id),
+      NotificationTime: notificationTime,
+      groupName, // Store groupName for cron job logging
+      sent: false, // Mark as unsent for cron job
+    });
     await savedNotification.save();
     console.log(
       "🚀 ~ sendGroupNotification ~ savedNotification:",
       savedNotification
     );
 
-    // 📤 Notification message template
-    const messageTemplate = {
-      notification: { title, body },
-      android: { priority: "high" },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-            "content-available": 1,
-          },
-        },
-      },
-      webpush: {
-        notification: { title, body, icon: "icon.png" },
-        fcmOptions: { link: "https://yourwebsite.com" }, // Replace with actual link
-      },
-    };
-
-    // 🔁 Send notifications
-    const results = [];
-    const errors = [];
-
-    for (const token of tokens) {
-      try {
-        const response = await admin.messaging().send({
-          ...messageTemplate,
-          token,
-        });
-
-        results.push({ token, success: true, response });
-      } catch (err) {
-        errors.push({ token, error: err.message });
-      }
-    }
-
-    // 📊 Summary
-    const successCount = results.length;
-    const failureCount = errors.length;
-
-    console.log("✅ Notification Summary:", {
-      group: groupName,
-      successCount,
-      failureCount,
-    });
-
-    return res.status(200).json({
-      message: `Notifications sent to group '${groupName}': ${successCount} succeeded, ${failureCount} failed.`,
+    return res.status(201).json({
+      message: `Notification scheduled for group '${groupName}' at ${NotificationTime} (IST: ${istTime}).`,
       data: {
-        successCount,
-        failureCount,
-        errors,
+        notification: savedNotification,
+        group: groupName,
+        deviceTokenCount: tokens.length,
+        notificationTimeUTC: NotificationTime,
+        notificationTimeIST: istTime,
+        currentTimeIST: currentTimeIST,
       },
     });
   } catch (error) {
-    console.error("❌ Error sending notification:", error);
+    console.error("❌ Error scheduling group notification:", error);
     return res.status(500).json({
-      message: "Failed to send group notification.",
+      message: "Failed to schedule group notification.",
       error: error.message || error,
     });
   }
 };
-
-// export const sendSingleNotification = async (req, res) => {
-//   const { title, body, selectedIds, NotificationTime } = req.body;
-//   console.log("Request body:", req.body);
-
-//   if (
-//     !title ||
-//     !body ||
-//     !Array.isArray(selectedIds) ||
-//     selectedIds.length === 0
-//   ) {
-//     return res.status(400).json({
-//       message: "Title, body, and a non-empty array of user IDs are required.",
-//     });
-//   }
-
+// export const sendGroupNotification = async (req, res) => {
 //   try {
-//     // Get device tokens for all selected IDs
-//     const userTokenDocs = await DeviceToken.find({ _id: { $in: selectedIds } });
+//     const { title, body, groupName, NotificationTime } = req.body;
+//     console.log("📦 Incoming Request:", req.body);
 
-//     if (!userTokenDocs || userTokenDocs.length === 0) {
-//       return res.status(404).json({
-//         message: "No valid device tokens found for the provided IDs.",
+//     // 🛡 Validate input
+//     if (!title || !body || !groupName || !NotificationTime) {
+//       return res.status(400).json({
+//         message: "Title, body, groupName, and NotificationTime are required.",
 //       });
 //     }
 
-//     // Filter out documents without tokens and collect valid tokens
-//     const tokens = userTokenDocs
-//       .filter((doc) => doc.token)
-//       .map((doc) => doc.token);
+//     // Validate NotificationTime format
+//     const notificationTime = new Date(NotificationTime);
+//     if (isNaN(notificationTime)) {
+//       return res.status(400).json({
+//         message:
+//           "Invalid NotificationTime format. Use ISO 8601 format (e.g., '2025-05-24T17:50:00.000+00:00').",
+//       });
+//     }
 
+//     // Convert NotificationTime to IST
+//     const istTime = notificationTime.toLocaleString("en-IN", {
+//       timeZone: "Asia/Kolkata",
+//       dateStyle: "full",
+//       timeStyle: "long",
+//     });
+//     console.log("🚀 ~ sendGroupNotification ~ Notification Time IST:", istTime);
+
+//     // Capture current time in IST
+//     const currentTimeIST = new Date().toLocaleString("en-IN", {
+//       timeZone: "Asia/Kolkata",
+//       dateStyle: "full",
+//       timeStyle: "long",
+//     });
+//     console.log(
+//       "🚀 ~ sendGroupNotification ~ Current Time IST:",
+//       currentTimeIST
+//     );
+
+//     // 🔍 Find group and populate device tokens
+//     const group = await Group.findOne({ groupName }).populate("deviceTokens");
+//     console.log("🚀 ~ sendGroupNotification ~ group:", group);
+//     if (!group) {
+//       return res.status(404).json({
+//         message: `Group '${groupName}' not found.`,
+//       });
+//     }
+
+//     // 🎯 Extract valid tokens
+//     const tokens = group.deviceTokens
+//       .filter((dt) => dt.token)
+//       .map((dt) => dt.token);
+//     console.log("🚀 ~ sendGroupNotification ~ tokens:", tokens);
 //     if (tokens.length === 0) {
 //       return res.status(404).json({
-//         message: "No valid device tokens found for the provided IDs.",
+//         message: "No valid device tokens found in this group.",
 //       });
 //     }
 
-//     // Save notification to DB with deviceTokens reference
-//     const notification = new Notification({
+//     // 📝 Save notification to DB with deviceTokens and NotificationTime
+//     const savedNotification = new Notification({
 //       title,
 //       body,
-//       NotificationTime,
-//       deviceTokens: userTokenDocs.map((doc) => doc._id),
+//       deviceTokens: group.deviceTokens.map((dt) => dt._id),
+//       NotificationTime: notificationTime,
+//       sent: true, // Mark as sent since we're sending immediately
 //     });
-//     await notification.save();
-//     console.log("✅ Notification saved:", notification);
+//     await savedNotification.save();
+//     console.log(
+//       "🚀 ~ sendGroupNotification ~ savedNotification:",
+//       savedNotification
+//     );
 
-//     // Prepare FCM message
-//     const message = {
-//       notification: {
-//         title,
-//         body,
-//       },
-//       android: {
-//         priority: "high",
-//       },
+//     // 📤 Notification message template
+//     const messageTemplate = {
+//       notification: { title, body },
+//       android: { priority: "high" },
 //       apns: {
 //         payload: {
 //           aps: {
@@ -356,150 +463,56 @@ export const sendGroupNotification = async (req, res) => {
 //         },
 //       },
 //       webpush: {
-//         notification: {
-//           title,
-//           body,
-//           icon: "icon.png",
-//         },
-//         fcm_options: {
-//           link: "https://yourwebsite.com",
-//         },
+//         notification: { title, body, icon: "icon.png" },
+//         fcmOptions: { link: "https://yourwebsite.com" },
 //       },
 //     };
 
-//     // Send notifications individually
+//     // 🔁 Send notifications
 //     const results = [];
 //     const errors = [];
+
 //     for (const token of tokens) {
 //       try {
-//         const response = await admin.messaging().send({ ...message, token });
+//         const response = await admin.messaging().send({
+//           ...messageTemplate,
+//           token,
+//         });
 //         results.push({ token, success: true, response });
 //       } catch (err) {
 //         errors.push({ token, error: err.message });
 //       }
 //     }
 
+//     // 📊 Summary
 //     const successCount = results.length;
 //     const failureCount = errors.length;
-
-//     console.log("📢 Notifications sent:", { successCount, failureCount });
+//     console.log("✅ Notification Summary:", {
+//       group: groupName,
+//       successCount,
+//       failureCount,
+//     });
 
 //     return res.status(200).json({
-//       message: `Notifications sent: ${successCount} succeeded, ${failureCount} failed.`,
-//       firebaseResponse: {
+//       message: `Notifications sent to group '${groupName}': ${successCount} succeeded, ${failureCount} failed.`,
+//       data: {
 //         successCount,
 //         failureCount,
 //         errors,
+//         notification: savedNotification,
+//         notificationTimeUTC: NotificationTime, // Original UTC time
+//         notificationTimeIST: istTime, // Converted IST time
+//         currentTimeIST: currentTimeIST, // Current time when sent
 //       },
-//       notificationSaved: notification,
 //     });
 //   } catch (error) {
-//     console.error("❌ Error sending notifications:", error);
+//     console.error("❌ Error sending group notification:", error);
 //     return res.status(500).json({
-//       message: "Failed to send notifications.",
-//       error: error.message,
+//       message: "Failed to send group notification.",
+//       error: error.message || error,
 //     });
 //   }
 // };
-
-// export const sendSingleNotification = async (req, res) => {
-//   const { title, body, selectedIds } = req.body;
-//   console.log("Request body:", req.body);
-
-//   if (
-//     !title ||
-//     !body ||
-//     !Array.isArray(selectedIds) ||
-//     selectedIds.length === 0
-//   ) {
-//     return res.status(400).json({
-//       message: "Title, body, and a non-empty array of user IDs are required.",
-//     });
-//   }
-
-//   try {
-//     // Get device tokens for all selected IDs
-//     const userTokenDocs = await DeviceToken.find({ _id: { $in: selectedIds } });
-
-//     if (!userTokenDocs || userTokenDocs.length === 0) {
-//       return res.status(404).json({
-//         message: "No valid device tokens found for the provided IDs.",
-//       });
-//     }
-
-//     // Filter out documents without tokens and collect valid tokens
-//     const tokens = userTokenDocs
-//       .filter((doc) => doc.token)
-//       .map((doc) => doc.token);
-
-//     if (tokens.length === 0) {
-//       return res.status(404).json({
-//         message: "No valid device tokens found for the provided IDs.",
-//       });
-//     }
-
-//     const message = {
-//       notification: {
-//         title,
-//         body,
-//       },
-//       android: {
-//         priority: "high",
-//       },
-//       apns: {
-//         payload: {
-//           aps: {
-//             sound: "default",
-//             "content-available": 1,
-//           },
-//         },
-//       },
-//       webpush: {
-//         notification: {
-//           title,
-//           body,
-//           icon: "icon.png",
-//         },
-//         fcm_options: {
-//           link: "https://yourwebsite.com",
-//         },
-//       },
-//     };
-
-//     // Send notifications individually
-//     const results = [];
-//     const errors = [];
-//     for (const token of tokens) {
-//       try {
-//         const response = await admin.messaging().send({ ...message, token });
-//         results.push({ token, success: true, response });
-//       } catch (err) {
-//         errors.push({ token, error: err.message });
-//       }
-//     }
-
-//     const successCount = results.length;
-//     const failureCount = errors.length;
-
-//     console.log("✅ Notifications sent:", { successCount, failureCount });
-
-//     res.status(200).json({
-//       message: `Notifications sent: ${successCount} succeeded, ${failureCount} failed.`,
-//       firebaseResponse: {
-//         successCount,
-//         failureCount,
-//         errors,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("❌ Error sending notifications:", error);
-//     res.status(500).json({
-//       message: "Failed to send notifications.",
-//       error: error.message,
-//     });
-//   }
-// };
-// send group notification
 
 export const sendSingleNotification = async (req, res) => {
   const { title, body, selectedIds, NotificationTime } = req.body;
