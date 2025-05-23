@@ -163,6 +163,7 @@ export const addLinkLog = async (req, res) => {
 export const displayLinkLog = async (req, res) => {
   try {
     const logs = await LinkLog.aggregate([
+      { $unwind: "$clicks" }, // unwind clicks array
       {
         $group: {
           _id: {
@@ -170,26 +171,37 @@ export const displayLinkLog = async (req, res) => {
             userName: "$userName",
             userEmail: "$userEmail",
             userPhone: "$userPhone",
-            cardId: "$cardId",
-            cardName: "$cardName",
+            cardId: "$clicks.cardId",
+            cardName: "$clicks.cardName",
           },
-          clickCount: { $sum: 1 },
-          clickTimes: { $push: "$createdAt" },
+          clickCount: { $sum: "$clicks.clickCount" },
+          clickTimes: { $push: "$clicks.clickTimes" },
         },
       },
       {
-        $sort: { "_id.userName": 1, "_id.cardName": 1 },
+        $sort: {
+          "_id.userName": 1,
+          "_id.cardName": 1,
+        },
       },
     ]);
 
-    // Convert to IST (Indian Standard Time)
-    const results = logs.map((log) => ({
-      ...log._id,
-      clickCount: log.clickCount,
-      clickTimes: log.clickTimes.map((ts) =>
-        new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      ),
-    }));
+    // Flatten clickTimes array because each clickTimes is an array itself
+    const results = logs.map((log) => {
+      const flattenedTimes = log.clickTimes.flat();
+      return {
+        userId: log._id.userId,
+        userName: log._id.userName,
+        userEmail: log._id.userEmail,
+        userPhone: log._id.userPhone,
+        cardId: log._id.cardId,
+        cardName: log._id.cardName,
+        clickCount: log.clickCount,
+        clickTimes: flattenedTimes.map((ts) =>
+          new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        ),
+      };
+    });
 
     return res.status(200).json({ data: results });
   } catch (error) {
