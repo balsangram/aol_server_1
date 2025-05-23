@@ -37,14 +37,14 @@ const groupSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    NotificationTime: {
-      type: Date,
-      required: true, // Required for scheduling
-    },
-    sent: {
-      type: Boolean,
-      default: false, // Track if notification has been sent
-    },
+    // NotificationTime: {
+    //   type: Date,
+    //   required: true, // Required for scheduling
+    // },
+    // sent: {
+    //   type: Boolean,
+    //   default: false, // Track if notification has been sent
+    // },
     groupName: {
       type: String, // For group-specific notifications
       required: false,

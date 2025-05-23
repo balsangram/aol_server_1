@@ -197,4 +197,3 @@ export const updateGroupUser = async (req, res) => {
     });
   }
 };
-
