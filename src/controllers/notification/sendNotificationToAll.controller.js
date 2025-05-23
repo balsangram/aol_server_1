@@ -267,37 +267,37 @@ import Notification from "../../models/notification/Notification.model.js";
 
 // send single notification
 
-export const sendNotificationToAll = async (req, res) => {
-  const { title, body, NotificationTime } = req.body;
+// export const sendNotificationToAll = async (req, res) => {
+//   const { title, body, NotificationTime } = req.body;
 
-  if (!title || !body || !NotificationTime) {
-    return res
-      .status(400)
-      .json({ message: "Title, body, and NotificationTime are required" });
-  }
+//   if (!title || !body || !NotificationTime) {
+//     return res
+//       .status(400)
+//       .json({ message: "Title, body, and NotificationTime are required" });
+//   }
 
-  try {
-    // Save the notification details to your DB
-    const saveNotification = new Notification({
-      title,
-      body,
-      NotificationTime: new Date(NotificationTime),
-    });
-    console.log(saveNotification, "saveNotification");
-    await saveNotification.save();
+//   try {
+//     // Save the notification details to your DB
+//     const saveNotification = new Notification({
+//       title,
+//       body,
+//       NotificationTime: new Date(NotificationTime),
+//     });
+//     console.log(saveNotification, "saveNotification");
+//     await saveNotification.save();
 
-    res.status(200).json({
-      message: "Notification scheduled successfully.",
-      notification: saveNotification,
-    });
-  } catch (error) {
-    console.error("❌ Error scheduling notification:", error);
-    res.status(500).json({
-      message: "Failed to schedule notification.",
-      error: error.message || error,
-    });
-  }
-};
+//     res.status(200).json({
+//       message: "Notification scheduled successfully.",
+//       notification: saveNotification,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error scheduling notification:", error);
+//     res.status(500).json({
+//       message: "Failed to schedule notification.",
+//       error: error.message || error,
+//     });
+//   }
+// };
 
 // export const sendNotificationToAll = async (req, res) => {
 //   const { title, body } = req.body;
@@ -357,6 +357,92 @@ export const sendNotificationToAll = async (req, res) => {
 //     });
 //   }
 // };
+//
+// export const sendNotificationToAll = async (req, res) => {
+//   const { title, body, NotificationTime } = req.body;
+
+//   if (!title || !body || !NotificationTime) {
+//     return res
+//       .status(400)
+//       .json({ message: "Title, body, and NotificationTime are required" });
+//   }
+
+//   try {
+//     const scheduledTime = new Date(NotificationTime);
+//     const currentTime = new Date();
+
+//     // Save the notification details to your DB
+//     const saveNotification = new Notification({
+//       title,
+//       body,
+//       NotificationTime: scheduledTime,
+//     });
+
+//     await saveNotification.save();
+
+//     res.status(200).json({
+//       message: "Notification scheduled successfully.",
+//       scheduledTime: scheduledTime.toISOString(),
+//       currentTime: currentTime.toISOString(),
+//       notification: saveNotification,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error scheduling notification:", error);
+//     res.status(500).json({
+//       message: "Failed to schedule notification.",
+//       error: error.message || error,
+//     });
+//   }
+// };
+
+export const sendNotificationToAll = async (req, res) => {
+  const { title, body, NotificationTime } = req.body;
+
+  if (!title || !body || !NotificationTime) {
+    return res
+      .status(400)
+      .json({ message: "Title, body, and NotificationTime are required" });
+  }
+
+  try {
+    const notificationDate = new Date(NotificationTime);
+
+    // Convert to IST
+    const istFormatter = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    const scheduledIST = istFormatter.format(notificationDate);
+    const currentIST = istFormatter.format(new Date());
+
+    const saveNotification = new Notification({
+      title,
+      body,
+      NotificationTime: notificationDate,
+    });
+
+    await saveNotification.save();
+
+    res.status(200).json({
+      message: "Notification scheduled successfully.",
+      scheduledTimeIST: scheduledIST,
+      currentTimeIST: currentIST,
+      notification: saveNotification,
+    });
+  } catch (error) {
+    console.error("❌ Error scheduling notification:", error);
+    res.status(500).json({
+      message: "Failed to schedule notification.",
+      error: error.message || error,
+    });
+  }
+};
 
 export const sendGroupNotification = async (req, res) => {
   try {
@@ -373,7 +459,9 @@ export const sendGroupNotification = async (req, res) => {
     // 🔍 Find group and populate device tokens
     const group = await Group.findOne({ groupName }).populate("deviceTokens");
 
+    console.log("🚀 ~ sendGroupNotification ~ group:", group);
     if (!group) {
+      console.log("🚀 ~ sendGroupNotification ~ tokens:", tokens);
       return res.status(404).json({
         message: `Group '${groupName}' not found.`,
       });
@@ -385,14 +473,40 @@ export const sendGroupNotification = async (req, res) => {
       .map((dt) => dt.token);
 
     if (tokens.length === 0) {
+      console.log(
+        "🚀 ~ sendGroupNotification ~ messageTemplate:",
+        messageTemplate
+      );
+      console.log(
+        "🚀 ~ sendGroupNotification ~ messageTemplate:",
+        messageTemplate
+      );
       return res.status(404).json({
         message: "No valid device tokens found in this group.",
       });
     }
 
+    // if (tokens.length === 0) {
+    //   console.log(
+    //     "🚀 ~ sendGroupNotification ~ messageTemplate:",
+    //     messageTemplate
+    //   );
+    //   console.log(
+    //     "🚀 ~ sendGroupNotification ~ messageTemplate:",
+    //     messageTemplate
+    //   );
+    //   return res.status(404).json({
+    //     message: "No valid device tokens found in this group.",
+    //   });
+    // }
+
     // 📝 Save notification to DB only once
     const savedNotification = new Notification({ title, body });
     await savedNotification.save();
+    console.log(
+      "🚀 ~ sendGroupNotification ~ savedNotification:",
+      savedNotification
+    );
 
     // 📤 Notification message template
     const messageTemplate = {

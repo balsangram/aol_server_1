@@ -4,14 +4,24 @@ const notificationSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true, // ✅ Fix: changed `require` to `required`
+      required: true,
     },
     body: {
       type: String,
-      required: true, // ✅ Fix: changed `require` to `required`
+      required: true,
     },
-    NotificationTime: { type: Date },
-
+    NotificationTime: {
+      type: Date,
+      required: true,
+    },
+    sent: {
+      type: Boolean,
+      default: false,
+    },
+    groupName: {
+      type: String,
+      required: false,
+    },
     deviceTokens: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -24,7 +34,10 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
-const Notification = mongoose.model("Notification", notificationSchema);
+const Notification =
+  mongoose.models.Notification ||
+  mongoose.model("Notification", notificationSchema);
+
 export default Notification;
 
 // import mongoose from "mongoose";
