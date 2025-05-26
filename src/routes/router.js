@@ -263,7 +263,7 @@ router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
 router.get("/countDeviceTokens", countDeviceTokens);
 router.get("/displayAllUSer", displayUser);
-router.post("/logout", logoutAndUnsubscribeToken);
+router.patch("/logout", logoutAndUnsubscribeToken);
 
 router.get("/searchUser", searchUser);
 

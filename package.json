@@ -33,5 +33,9 @@
     "seed": "^0.4.4",
     "translate": "^3.0.1",
     "translatte": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
   }
 }

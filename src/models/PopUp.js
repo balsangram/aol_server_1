@@ -6,6 +6,10 @@ const popUpSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    liveTime: {
+      type: Date, // time when the popup should be updated or expired
+      required: true,
+    },
   },
   {
     timestamps: true,

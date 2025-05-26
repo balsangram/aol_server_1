@@ -260,7 +260,6 @@ export const addAdvertisement = async (req, res) => {
   }
 };
 
-
 export const getAdvertisements = async (req, res) => {
   try {
     const advertisements = await Advertisement.find().sort({ createdAt: -1 });

@@ -76,6 +76,7 @@ import Card from "../../models/Card.model.js";
 export const addLinkLog = async (req, res) => {
   try {
     const { userId, cardId, cardName } = req.body;
+    console.log("🚀 ~ addLinkLog ~ req.body:", req.body);
 
     // Find user
     const user = await DeviceToken.findById(userId);

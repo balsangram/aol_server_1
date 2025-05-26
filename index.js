@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
 import router from "./src/routes/router.js";
-import { notificationJob } from "./src/utils/cronJobs/updateLiveStatus.js";
+import { liveLinkJob } from "./src/utils/cronJobs/liveUpScheduler.js";
+import { jobNotification } from "./src/utils/cronJobs/noteficationUpScheduler.js";
 // import notificationRoutes from "./firebase.js";
 // import admin from "./firebase";
 
@@ -21,7 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/aol", router);
 
 // job.start();
-notificationJob.start();
+// notificationJob.start();
+liveLinkJob.start();
+jobNotification.start();
+// popupCronJob.start();
+console.log("🚀 Popup cron job started");
 
 // app.use('/cards', verifyToken, cardRoutes);
 // app.use('/cards',cardRoutes);
