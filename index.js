@@ -38,7 +38,7 @@ console.log("🚀 Popup cron job started");
 
 // healthy api
 app.get("/", (req, res) => {
-  res.send("Hello, this project is Art Of Living 21-5-25:14:30");
+  res.send("Hello, this project is Art Of Living 27-5-25:14:30");
 });
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {

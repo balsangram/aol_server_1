@@ -351,7 +351,7 @@ router.patch(
 );
 router.delete("/delete_direction/:id", delete_direction);
 
-router.get("/get_direction_names", getNames);
+router.get("/get_direction_names/:directionusertype", getNames);
 router.get("/get_perticular_card/:cardName", getSingelCard);
 
 // linkLog
