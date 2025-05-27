@@ -566,6 +566,7 @@ export const displayAllNotification = async (req, res) => {
   try {
     const notifications = await Notification.find()
       .sort({ createdAt: -1 })
+      .limit(20) // ✅ Limit to 20 results
       .lean();
 
     const formatted = notifications.map((n) => {
@@ -584,36 +585,6 @@ export const displayAllNotification = async (req, res) => {
   }
 };
 
-// export const displayAllNotification = async (req, res) => {
-//   try {
-//     const notifications = await Notification.find()
-//       .sort({ createdAt: -1 }) // Newest first
-//       .lean();
-
-//     // console.log("🚀 ~ displayAllNotification ~ notifications:", notifications);
-
-//     const formatted = notifications.map((n) => {
-//       const dateObj = new Date(n.createdAt);
-//       const date = dateObj.toLocaleDateString();
-//       const hours = dateObj.getHours().toString().padStart(2, "0");
-//       const minutes = dateObj.getMinutes().toString().padStart(2, "0");
-//       const time = `${hours}:${minutes}`;
-
-//       return {
-//         ...n,
-//         date,
-//         time,
-//       };
-//     });
-
-//     console.log("🚀 ~ formatted ~ formatted:", formatted);
-//     res.status(200).json(formatted);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Something went wrong" });
-//   }
-// };
-
 // Better naming if you are counting device tokens
 export const countDeviceTokens = async (req, res) => {
   try {
@@ -624,57 +595,6 @@ export const countDeviceTokens = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
-
-// logout
-// export const logoutAndUnsubscribeToken = async (req, res) => {
-//   const { token } = req.body;
-//   console.log("🚀 ~ logoutAndUnsubscribeToken ~ token:", req.body);
-
-//   if (!token || typeof token !== "string") {
-//     return res.status(400).json({ message: "Valid device token is required." });
-//   }
-
-//   try {
-//     const response = await admin.messaging().unsubscribeFromTopic(token, "all");
-
-//     if (!response || response.failureCount > 0) {
-//       const errorInfo =
-//         response.errors?.[0]?.error ||
-//         "Unknown error while unsubscribing from topic.";
-
-//       console.log("FCM Unsubscribe Error:", errorInfo);
-
-//       return res.status(400).json({
-//         message: "Failed to unsubscribe token from topic 'all'.",
-//         error: errorInfo,
-//       });
-//     }
-
-//     console.log("Token unsubscribed from 'all' topic ❌📡:", response);
-
-//     // ✅ Fix: use the correctly imported model
-//     const deletionResult = await DeviceToken.deleteOne({ token });
-
-//     if (deletionResult.deletedCount === 0) {
-//       return res.status(404).json({ message: "Token not found in database." });
-//     }
-
-//     console.log("Token deleted from DB 🗑️");
-
-//     res.status(200).json({
-//       message: "Token unsubscribed and deleted successfully.",
-//       firebaseResponse: response,
-//     });
-//   } catch (error) {
-//     console.log("Error in logoutAndUnsubscribeToken:", error);
-
-//     res.status(500).json({
-//       message: "Internal server error occurred during logout.",
-//       error: error.message || "Unexpected error",
-//     });
-//   }
-// };
-
 export const logoutAndUnsubscribeToken = async (req, res) => {
   console.log("came in logout.,..");
 
@@ -708,26 +628,12 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
     });
   }
 };
-
-// display all user
-
-// export const displayUser = async (req, res) => {
-//   try {
-//     const devices = await DeviceToken.find();
-//     res.status(200).json({
-//       message: "Device tokens fetched successfully",
-//       data: devices,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching device tokens:", error);
-//     res.status(500).json({ message: "Failed to fetch device tokens" });
-//   }
-// };
-
 export const displayUser = async (req, res) => {
   try {
-    const devices = await DeviceToken.find();
-
+    const devices = await DeviceToken.find()
+      .sort({ createdAt: -1 })
+      .limit(20) // ✅ Limit to 20 results
+      .lean();
     // Convert all timestamps to IST
     const updatedDevices = devices.map((device) => {
       return {
