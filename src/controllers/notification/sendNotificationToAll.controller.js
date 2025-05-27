@@ -5,6 +5,58 @@ import Group from "../../models/notification/Group.model.js";
 import Notification from "../../models/notification/Notification.model.js";
 import { CronJob } from "cron";
 
+import schedule from "node-schedule";
+
+export async function scheduleNotificationWithCron(
+  scheduleString,
+  message,
+  tokens
+) {
+  try {
+    // Parse mm-hh-dd-MM-yyyy
+    const [minute, hour, day, month, year] = scheduleString
+      .split("-")
+      .map(Number);
+
+    // Create a moment object in IST timezone
+    const dateIST = moment.tz(
+      `${year}-${month}-${day} ${hour}:${minute}`,
+      "YYYY-MM-DD HH:mm",
+      "Asia/Kolkata"
+    );
+
+    if (dateIST.isBefore(moment())) {
+      console.log("Scheduled time is in the past.");
+      return;
+    }
+    console.log("initial timing ; ", scheduleString);
+
+    const date = dateIST.toDate(); // convert to JS Date
+
+    // Schedule a job
+    const job = schedule.scheduleJob(date, async function () {
+      const results = [];
+      const errors = [];
+
+      for (const token of tokens) {
+        try {
+          const response = await admin.messaging().send({ ...message, token });
+          results.push({ token, success: true, response });
+          console.log(
+            `✅ Notification sent to ${tokens} at ${dateIST.format()}:`,
+            response
+          );
+        } catch (err) {
+          errors.push({ token, error: err.message });
+        }
+      }
+      // const response = await admin.messaging().send(fullMessage);
+    });
+  } catch (err) {
+    console.error(`❌ Failed to send notification:`, err.message);
+  }
+}
+
 export const sendNotificationToAll = async (req, res) => {
   const { title, body, NotificationTime } = req.body;
 
@@ -126,7 +178,6 @@ export const sendGroupNotification = async (req, res) => {
   }
 
   const message = {
-    topic: groupName,
     notification: {
       title,
       body,
@@ -138,84 +189,65 @@ export const sendGroupNotification = async (req, res) => {
       payload: {
         aps: {
           sound: "default",
+          "content-available": 1,
         },
       },
     },
+    webpush: {
+      notification: {
+        title,
+        body,
+        icon: "icon.png",
+      },
+      fcm_options: {
+        link: "https://yourwebsite.com",
+      },
+    },
   };
+
   console.log("🚀 ~ sendGroupNotification ~ message:", message);
   try {
-    const now = new Date();
-    let cronTime = "* * * * * *";
-    // If NotificationTime is not given, send immediately
-    let nowTime = new Date();
-    if (NotificationTime) {
-      nowTime = new Date(NotificationTime);
+    const myTokens = await Group.find({
+      groupName: groupName,
+    });
+    console.log(myTokens[0].deviceTokens, "tokens");
 
-      const minute = nowTime.getMinutes();
-      const hour = nowTime.getHours();
-      const day = nowTime.getDate();
-      const month = nowTime.getMonth() + 1;
-      cronTime = `${minute} ${hour} ${day} ${month} *`;
-      if (nowTime < now) {
-        return res.status(400).json({
-          message: "NotificationTime must be in the future.",
-        });
-      }
+    const idStrings = myTokens[0].deviceTokens.map((id) => id.toString());
+    const userTokenDocs = await DeviceToken.find({ _id: { $in: idStrings } });
+
+    if (!userTokenDocs || userTokenDocs.length === 0) {
+      return res.status(404).json({
+        message: "No valid device tokens found for the provided IDs.",
+      });
     }
+
+    const tokens = userTokenDocs
+      .filter((doc) => doc.token)
+      .map((doc) => doc.token);
+
+    if (tokens.length === 0) {
+      return res.status(404).json({
+        message: "No valid device tokens found for the provided IDs.",
+      });
+    }
+
+    console.log(idStrings);
+    scheduleNotificationWithCron(NotificationTime, message, tokens);
 
     let sentNotification = new Notification({
       title,
       body,
       status: "sent",
-      sentAt: nowTime,
-    });
-    if (now < nowTime) {
-      const job = new CronJob(
-        cronTime,
-        async function () {
-          console.log("Executing scheduled task at IST time!");
-          await admin.messaging().send(message);
-          await sentNotification.save();
-          job.stop();
-        },
-        null,
-        true,
-        "Asia/Kolkata"
-      );
-    } else {
-      await admin.messaging().send(message);
-      await sentNotification.save();
-    }
-    // console.log("🚀 ~ sendNotificationToAll ~ job:", job);
-    let scheduledNotification = null;
-    if (nowTime > now) {
-      scheduledNotification = new Notification({
-        title,
-        body,
-        NotificationTime: nowTime,
-        status: "scheduled",
-      });
-      await scheduledNotification.save();
-    }
-
-    // Return response
-    const istFormatter = new Intl.DateTimeFormat("en-IN", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      sentAt: NotificationTime,
     });
 
     res.status(200).json({
       message: "Notification scheduled successfully.",
-      scheduledTimeIST: istFormatter.format(nowTime),
-      currentTimeIST: istFormatter.format(now),
-      notification: scheduledNotification
-        ? scheduledNotification
-        : sentNotification,
+      // scheduledTimeIST: istFormatter.format(nowTime),
+      // currentTimeIST: istFormatter.format(now),
+      // notification: scheduledNotification
+      //   ? scheduledNotification
+      //   : sentNotification,
     });
   } catch (error) {
     console.error("❌ Error processing notification:", error);
@@ -226,79 +258,6 @@ export const sendGroupNotification = async (req, res) => {
     });
   }
 };
-
-import schedule from "node-schedule";
-
-async function scheduleNotificationWithCron(scheduleString, message, tokens) {
-  // Parse mm-hh-dd-MM-yyyy
-  const [minute, hour, day, month, year] = scheduleString
-    .split("-")
-    .map(Number);
-
-  // Create a moment object in IST timezone
-  const dateIST = moment.tz(
-    `${year}-${month}-${day} ${hour}:${minute}`,
-    "YYYY-MM-DD HH:mm",
-    "Asia/Kolkata"
-  );
-
-  if (dateIST.isBefore(moment())) {
-    console.log("Scheduled time is in the past.");
-    return;
-  }
-  console.log("initial timing ; ", scheduleString);
-
-  const date = dateIST.toDate(); // convert to JS Date
-
-  // Schedule a job
-  const job = schedule.scheduleJob(date, async function () {
-    // const fullMessage = {
-    //   notification: {
-    //     title: message.title,
-    //     body: message.body,
-    //   },
-    //   android: { priority: "high" },
-    //   apns: {
-    //     payload: {
-    //       aps: { sound: "default", "content-available": 1 },
-    //     },
-    //   },
-    //   webpush: {
-    //     notification: {
-    //       title: message.title,
-    //       body: message.body,
-    //       icon: "icon.png",
-    //     },
-    //     fcm_options: {
-    //       link: "https://yourwebsite.com",
-    //     },
-    //   },
-    // };
-
-    const results = [];
-    const errors = [];
-
-    try {
-      for (const token of tokens) {
-        try {
-          const response = await admin.messaging().send({ ...message, token });
-          results.push({ token, success: true, response });
-          console.log(
-            `✅ Notification sent to ${tokens} at ${dateIST.format()}:`,
-            response
-          );
-        } catch (err) {
-          errors.push({ token, error: err.message });
-        }
-      }
-      // const response = await admin.messaging().send(fullMessage);
-    } catch (err) {
-      console.error(`❌ Failed to send notification:`, err.message);
-    }
-  });
-
-  console.log(`📅 Notification scheduled for ${dateIST.format()} IST`);
-}
 
 export const sendSingleNotification = async (req, res) => {
   const { title, body, selectedIds, NotificationTime } = req.body;
@@ -374,14 +333,6 @@ export const sendSingleNotification = async (req, res) => {
     const results = [];
     const errors = [];
 
-    // for (const token of tokens) {
-    //   try {
-    //     const response = await admin.messaging().send({ ...message, token });
-    //     results.push({ token, success: true, response });
-    //   } catch (err) {
-    //     errors.push({ token, error: err.message });
-    //   }
-    // }
     console.log(NotificationTime, "NotificationTime");
 
     scheduleNotificationWithCron(NotificationTime, message, tokens);

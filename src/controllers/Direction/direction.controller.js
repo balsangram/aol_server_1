@@ -7,14 +7,20 @@ export const add_direction = async (req, res) => {
   console.log("1");
 
   try {
-    const { directionName, directionDescription, longitude, latitude } =
-      req.body;
+    const {
+      directionName,
+      directionDescription,
+      longitude,
+      latitude,
+      directionusertype,
+    } = req.body;
     console.log(
       "1.5",
       directionName,
       directionDescription,
       longitude,
-      latitude
+      latitude,
+      directionusertype
     );
 
     // Validate fields
@@ -23,6 +29,7 @@ export const add_direction = async (req, res) => {
       !directionDescription ||
       !longitude ||
       !latitude ||
+      !directionusertype ||
       !req.file
     ) {
       console.log("2");
@@ -49,6 +56,7 @@ export const add_direction = async (req, res) => {
       directionDescription,
       longitude,
       latitude,
+      directionusertype,
     });
     console.log("🚀 ~ constadd_direction= ~ newDirection:", newDirection);
 
@@ -137,12 +145,32 @@ export const delete_direction = async (req, res) => {
 
 export const getNames = async (req, res) => {
   try {
-    // Fetching all directions but only returning directionName
-    const directions = await Direction.find({}, "directionName"); // This will only fetch the directionName field
+    const { directionusertype } = req.params;
+    console.log("🚀 ~ getNames ~ directionusertype:", directionusertype);
 
-    res.status(200).json(directions); // Sending the direction names as a response
+    let filter = {};
+
+    if (directionusertype === "visitor") {
+      filter = { directionusertype: { $in: ["visitor", "both"] } };
+    } else if (directionusertype === "participant") {
+      filter = { directionusertype: { $in: ["participant", "both"] } };
+    } else if (directionusertype === "both") {
+      // Fetch everything
+      filter = {}; // or: { directionusertype: { $in: ["visitor", "participant", "both"] } }
+    } else {
+      return res.status(400).json({ error: "Invalid direction user type." });
+    }
+
+    // Fetch only required fields (customize as needed)
+    const directions = await Direction.find(
+      filter,
+      "directionName directionusertype"
+    );
+
+    res.status(200).json(directions);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch directions" });
+    console.error("Error fetching directions:", error);
+    res.status(500).json({ error: "Server error while fetching directions." });
   }
 };
 

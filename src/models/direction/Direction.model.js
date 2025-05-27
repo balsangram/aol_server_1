@@ -24,6 +24,10 @@ const directionSchema = new mongoose.Schema(
       enum: ["Tour and Maps", "Audio Tour only", "All"],
       default: "Tour and Maps",
     },
+    directionusertype: {
+      type: String,
+      enum: ["Visitor", "Participant", "Both"],
+    },
 
     longitude: {
       type: Number,
