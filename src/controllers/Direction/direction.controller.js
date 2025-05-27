@@ -150,13 +150,13 @@ export const getNames = async (req, res) => {
 
     let filter = {};
 
-    if (directionusertype === "visitor") {
-      filter = { directionusertype: { $in: ["visitor", "both"] } };
+    if (directionusertype === "Visitor") {
+      filter = { directionusertype: { $in: ["Visitor", "Both"] } };
     } else if (directionusertype === "participant") {
-      filter = { directionusertype: { $in: ["participant", "both"] } };
-    } else if (directionusertype === "both") {
+      filter = { directionusertype: { $in: ["participant", "Both"] } };
+    } else if (directionusertype === "Both") {
       // Fetch everything
-      filter = {}; // or: { directionusertype: { $in: ["visitor", "participant", "both"] } }
+      filter = {}; // or: { directionusertype: { $in: ["Visitor", "participant", "Both"] } }
     } else {
       return res.status(400).json({ error: "Invalid direction user type." });
     }
