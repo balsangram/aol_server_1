@@ -664,20 +664,42 @@ export const getUserNotifications = async (req, res) => {
     if (!device) {
       return res.status(404).json({ message: "Device not registered." });
     }
+    // console.log("🚀 ~ getUserNotifications ~ device:", device);
 
     const deviceCreatedAt = device.createdAt;
-
+    // console.log(
+    //   "🚀 ~ getUserNotifications ~ deviceCreatedAt:",
+    //   deviceCreatedAt
+    // );
     const notifications = await Notification.find({
       createdAt: { $gte: deviceCreatedAt },
     })
       .sort({ createdAt: -1 })
       .limit(20) // ✅ Limit to 20 results
       .lean();
+    // console.log("🚀 ~ getUserNotifications ~ notifications:", notifications);
 
-    const filteredNotifications = notifications.filter(
-      (notification) =>
-        notification.deviceTokens.length === 0 ||
-        notification.deviceTokens.includes(deviceId)
+    const filteredNotifications = notifications.filter((notification) => {
+      console.log(
+        "🚀 ~ filteredNotifications ~ notification.deviceTokens.length:",
+        notification.deviceTokens.length
+      );
+      console.log(
+        "🚀 ~ filteredNotifications ~ notification.deviceTokens:",
+        notification.deviceTokens
+      );
+      if (!notification.deviceTokens || notification.deviceTokens.length == 0) {
+        return true;
+      }
+
+      return notification.deviceTokens.some(
+        (token) => token.toString() === deviceId.toString()
+      );
+    });
+
+    console.log(
+      "🚀 ~ getUserNotifications ~ filteredNotifications:",
+      filteredNotifications
     );
 
     const formattedNotifications = filteredNotifications.map((notification) => {
