@@ -628,33 +628,25 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
     });
   }
 };
-
 export const displayUser = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const devices = await DeviceToken.find();
 
-    const devices = await DeviceToken.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const updatedDevices = devices.map((device) => ({
-      ...device,
-      createdAtIST: device.createdAt?.toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      }),
-      updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      }),
-    }));
+    // Convert all timestamps to IST
+    const updatedDevices = devices.map((device) => {
+      return {
+        ...device._doc, // get plain object
+        createdAtIST: device.createdAt?.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
+        updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
+      };
+    });
 
     res.status(200).json({
       message: "Device tokens fetched successfully",
-      page,
-      limit,
       data: updatedDevices,
     });
   } catch (error) {
@@ -662,118 +654,6 @@ export const displayUser = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch device tokens" });
   }
 };
-
-// export const displayUser = async (req, res) => {
-//   try {
-//     const devices = await DeviceToken.find()
-//       .sort({ createdAt: -1 })
-//       .limit(20) // ✅ This limits results to 20
-//       .lean();
-
-//     // Convert all timestamps to IST
-//     const updatedDevices = devices.map((device) => {
-//       return {
-//         ...device._doc, // get plain object
-//         createdAtIST: device.createdAt?.toLocaleString("en-IN", {
-//           timeZone: "Asia/Kolkata",
-//         }),
-//         updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
-//           timeZone: "Asia/Kolkata",
-//         }),
-//       };
-//     });
-
-//     res.status(200).json({
-//       message: "Device tokens fetched successfully",
-//       data: updatedDevices,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching device tokens:", error);
-//     res.status(500).json({ message: "Failed to fetch device tokens" });
-//   }
-// };
-
-// single notification
-
-// export const getUserNotifications = async (req, res) => {
-//   const { deviceId } = req.params;
-
-//   try {
-//     const notifications = await Notification.find({
-//       deviceTokens: deviceId,
-//     }).sort({ createdAt: -1 }); // Sort by most recent
-
-//     if (!notifications.length) {
-//       return res.status(404).json({ message: "No notifications found." });
-//     }
-
-//     return res.status(200).json({
-//       message: "Notifications fetched successfully.",
-//       data: notifications,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error fetching user notifications:", error);
-//     return res.status(500).json({
-//       message: "Failed to fetch notifications.",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// export const getUserNotifications = async (req, res) => {
-//   const { deviceId } = req.params;
-//   console.log("📱 Received deviceId:", deviceId);
-
-//   try {
-//     // Step 1: Get device from DB
-//     const device = await DeviceToken.findOne({ _id: deviceId.trim() }); // Trim extra spaces just in case
-
-//     console.log("🚀 ~ getUserNotifications ~ device:", !device);
-//     if (!device) {
-//       return res.status(404).json({ message: "Device not registered." });
-//     }
-
-//     const deviceCreatedAt = device.createdAt;
-//     console.log("📅 Device registered at:", deviceCreatedAt);
-
-//     // Step 2: Get notifications created AFTER device registration
-//     const notifications = await Notification.find({
-//       createdAt: { $gte: deviceCreatedAt },
-//     }).sort({ createdAt: -1 });
-
-//     // Step 3: Filter global or targeted notifications
-//     const filteredNotifications = notifications.filter(
-//       (notification) =>
-//         notification.deviceTokens.length === 0 || // Global
-//         notification.deviceTokens.includes(deviceId) // Targeted to this device
-//     );
-
-//     // Step 4: Format notification output
-//     const formattedNotifications = filteredNotifications.map(
-//       (notification) => ({
-//         _id: notification._id,
-//         title: notification.title,
-//         body: notification.body,
-//         deviceTokens: notification.deviceTokens,
-//         createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
-//         updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-//       })
-//     );
-
-//     return res.status(200).json({
-//       message: formattedNotifications.length
-//         ? "Notifications fetched successfully."
-//         : "No new notifications found.",
-//       data: formattedNotifications,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error fetching notifications:", error);
-//     return res.status(500).json({
-//       message: "Server error while fetching notifications.",
-//       error: error.message,
-//     });
-//   }
-// };
 
 export const getUserNotifications = async (req, res) => {
   const { deviceId } = req.params;
@@ -789,7 +669,10 @@ export const getUserNotifications = async (req, res) => {
 
     const notifications = await Notification.find({
       createdAt: { $gte: deviceCreatedAt },
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .limit(20) // ✅ Limit to 20 results
+      .lean();
 
     const filteredNotifications = notifications.filter(
       (notification) =>
