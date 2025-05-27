@@ -628,27 +628,33 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
     });
   }
 };
+
 export const displayUser = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
     const devices = await DeviceToken.find()
       .sort({ createdAt: -1 })
-      .limit(20) // ✅ Limit to 20 results
+      .skip(skip)
+      .limit(limit)
       .lean();
-    // Convert all timestamps to IST
-    const updatedDevices = devices.map((device) => {
-      return {
-        ...device._doc, // get plain object
-        createdAtIST: device.createdAt?.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-        }),
-        updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-        }),
-      };
-    });
+
+    const updatedDevices = devices.map((device) => ({
+      ...device,
+      createdAtIST: device.createdAt?.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      }),
+      updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      }),
+    }));
 
     res.status(200).json({
       message: "Device tokens fetched successfully",
+      page,
+      limit,
       data: updatedDevices,
     });
   } catch (error) {
@@ -656,6 +662,36 @@ export const displayUser = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch device tokens" });
   }
 };
+
+// export const displayUser = async (req, res) => {
+//   try {
+//     const devices = await DeviceToken.find()
+//       .sort({ createdAt: -1 })
+//       .limit(20) // ✅ This limits results to 20
+//       .lean();
+
+//     // Convert all timestamps to IST
+//     const updatedDevices = devices.map((device) => {
+//       return {
+//         ...device._doc, // get plain object
+//         createdAtIST: device.createdAt?.toLocaleString("en-IN", {
+//           timeZone: "Asia/Kolkata",
+//         }),
+//         updatedAtIST: device.updatedAt?.toLocaleString("en-IN", {
+//           timeZone: "Asia/Kolkata",
+//         }),
+//       };
+//     });
+
+//     res.status(200).json({
+//       message: "Device tokens fetched successfully",
+//       data: updatedDevices,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching device tokens:", error);
+//     res.status(500).json({ message: "Failed to fetch device tokens" });
+//   }
+// };
 
 // single notification
 
