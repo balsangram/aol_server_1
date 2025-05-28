@@ -269,7 +269,7 @@ export const singleHomeuserType = async (req, res) => {
     const { id } = req.params;
 
     // Find device token and populate associated userTypes
-    const user = await DeviceToken.findById(id).select("CardTypes");
+    const user = await DeviceToken.findById(id).select("CardTypes");    
 
     if (!user) {
       return res.status(404).json({ message: "DeviceToken not found" });

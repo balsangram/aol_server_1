@@ -214,6 +214,9 @@ router.delete("/deleteUSerType/:id", deleteUserType);
 router.post("/userType_importance/:id", changeLikeOrDislike);
 router.post("/homeCard_importance/:id", changeHomeLikeOrDislike);
 
+// router.get("/displayFavouriteInternal/:id",)
+// router.get("/displayFavouriteHome/:id",)
+
 //actions
 router.get("/displayAction/:usertype", action);
 router.post("/addAction", upload_V2.any(), addAction);
