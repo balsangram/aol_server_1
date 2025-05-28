@@ -28,6 +28,7 @@ import {
 } from "../controllers/card.controller.js";
 import {
   addUserType,
+  changeHomeLikeOrDislike,
   changeLikeOrDislike,
   deleteUserType,
   singleuserType,
@@ -209,6 +210,7 @@ router.delete("/deleteUSerType/:id", deleteUserType);
 
 // favorite
 router.post("/userType_importance/:id", changeLikeOrDislike);
+router.post("/homeCard_importance/:id", changeHomeLikeOrDislike);
 
 //actions
 router.get("/displayAction/:usertype", action);

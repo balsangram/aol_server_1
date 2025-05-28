@@ -156,10 +156,10 @@ export const changeLikeOrDislike = async (req, res) => {
     const { id } = req.params; // Assuming you're passing `id` in the route parameter
     const { cardId } = req.body;
     const exist = await DeviceToken.findById(id);
-    const exisstcardId = await UserType.findById(cardId);
     if (!exist) {
       return res.status(404).json({ message: "Device not found." });
     }
+    const exisstcardId = await UserType.findById(cardId);
     if (!exisstcardId) {
       return res.status(404).json({ message: "UserType not found." });
     }
@@ -219,5 +219,46 @@ export const singleuserType = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const changeHomeLikeOrDislike = async (req, res) => {
+  try {
+    const { id } = req.params; // Assuming you're passing `id` in the route parameter
+    const { cardId } = req.body;
+    const exist = await DeviceToken.findById(id);
+    const exisstcardId = await UserType.findById(cardId);
+    if (!exist) {
+      return res.status(404).json({ message: "Device not found." });
+    }
+    if (!exisstcardId) {
+      return res.status(404).json({ message: "UserType not found." });
+    }
+
+    if (!exist.CardTypes.some((id) => id.toString() === cardId)) {
+      console.log("not available");
+      exist.CardTypes.push(cardId);
+      await exist.save();
+    } else {
+      console.log("available");
+      // Remove the cardId from the array 
+      exist.CardTypes = exist.CardTypes.filter(
+        (id) => id.toString() !== cardId
+      );
+      await exist.save();
+    }
+
+    // Continue with further logic here...
+    return res.status(200).json({
+      message: "DeviceToken found.",
+      data: exist,
+      userType: exisstcardId,
+    });
+  } catch (error) {
+    console.error("❌ Error toggling favourite:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      error: error.message,
+    });
   }
 };

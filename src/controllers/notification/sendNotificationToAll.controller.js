@@ -731,44 +731,6 @@ export const getUserNotifications = async (req, res) => {
   }
 };
 
-// export const getUserNotifications = async (req, res) => {
-//   const { deviceId } = req.params;
-
-//   try {
-//     const notifications = await Notification.find().sort({ createdAt: -1 });
-//     const filteredNotifications = notifications.filter(
-//       (notification) =>
-//         notification.deviceTokens.length === 0 ||
-//         notification.deviceTokens.includes(deviceId)
-//     );
-
-//     const formattedNotifications = filteredNotifications.map(
-//       (notification) => ({
-//         _id: notification._id,
-//         title: notification.title,
-//         body: notification.body,
-//         deviceTokens: notification.deviceTokens,
-//         createdAt: moment(notification.createdAt).format("YYYY-MM-DD HH:mm:ss"),
-//         updatedAt: moment(notification.updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-//       })
-//     );
-
-//     return res.status(200).json({
-//       message: formattedNotifications.length
-//         ? "Notifications fetched successfully."
-//         : "No notifications found.",
-//       data: formattedNotifications,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error fetching user notifications:", error);
-//     return res.status(500).json({
-//       message: "Failed to fetch notifications.",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// search user
 export const searchUser = async (req, res) => {
   try {
     const { username, email, phone } = req.query;

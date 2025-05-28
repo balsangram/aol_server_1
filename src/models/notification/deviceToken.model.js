@@ -13,9 +13,15 @@ const deviceTokenSchema = new mongoose.Schema(
         ref: "UserType",
       },
     ],
+    CardTypes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Card",
+      },
+    ],
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
