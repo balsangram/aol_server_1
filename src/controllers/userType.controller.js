@@ -263,3 +263,33 @@ export const changeHomeLikeOrDislike = async (req, res) => {
     });
   }
 };
+
+export const singleHomeuserType = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find device token and populate associated userTypes
+    const user = await DeviceToken.findById(id).select("CardTypes");
+
+    if (!user) {
+      return res.status(404).json({ message: "DeviceToken not found" });
+    }
+
+    const CardTypes = user.CardTypes;
+    console.log("🚀 ~ singleuserType ~ CardTypes:", CardTypes);
+
+    // const favoriteAuthors = CardTypes.filter((u) => u.favourite);
+    // const nonFavoriteAuthors = CardTypes.filter((u) => !u.favourite);
+
+    res.status(200).json({
+      totalCardTypes: CardTypes.length,
+      // favoriteAuthorsCount: favoriteAuthors.length,
+      // nonFavoriteAuthorsCount: nonFavoriteAuthors.length,
+      // favoriteAuthors,
+      // nonFavoriteAuthors,
+      CardTypes,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
