@@ -253,7 +253,7 @@ export const changeHomeLikeOrDislike = async (req, res) => {
     return res.status(200).json({
       message: "DeviceToken found.",
       data: exist,
-      userType: exisstcardId,
+      Card: exisstcardId,
     });
   } catch (error) {
     console.error("❌ Error toggling favourite:", error);
