@@ -566,7 +566,7 @@ export const displayAllNotification = async (req, res) => {
   try {
     const notifications = await Notification.find()
       .sort({ createdAt: -1 })
-      .limit(20) // ✅ Limit to 20 results
+      .limit(15) // ✅ Limit to 20 results
       .lean();
 
     const formatted = notifications.map((n) => {
@@ -675,7 +675,7 @@ export const getUserNotifications = async (req, res) => {
       createdAt: { $gte: deviceCreatedAt },
     })
       .sort({ createdAt: -1 })
-      .limit(20) // ✅ Limit to 20 results
+      .limit(15) // ✅ Limit to 20 results
       .lean();
     // console.log("🚀 ~ getUserNotifications ~ notifications:", notifications);
 

@@ -6,6 +6,13 @@ const cardSchema = new mongoose.Schema(
     name: { type: String, required: true },
     link: { type: String },
     img: { type: String },
+
+     user: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "DeviceToken",
+          },
+        ],
   },
   { timestamps: true }
 );

@@ -7,6 +7,7 @@ const customerSchema = mongoose.Schema(
     phoneNo: { type: String },
     aadhaarNo: { type: String },
     // password: { type: String },
+    
   },
   {
     timestamps: true,

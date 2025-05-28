@@ -1,6 +1,7 @@
 import LinkLog from "../../models/LinkLogs/LinkLogCard.model.js";
 import DeviceToken from "../../models/notification/deviceToken.model.js";
 import Card from "../../models/Card.model.js";
+import CardClick from "../../models/LinkLogs/cardClickSchema.js";
 
 // export const addLinkLog = async (req, res) => {
 //   try {
@@ -161,58 +162,6 @@ export const addLinkLog = async (req, res) => {
   }
 };
 
-// export const displayLinkLog = async (req, res) => {
-//   try {
-//     const logs = await LinkLog.aggregate([
-//       { $unwind: "$clicks" }, // unwind clicks array
-//       {
-//         $group: {
-//           _id: {
-//             userId: "$userId",
-//             userName: "$userName",
-//             userEmail: "$userEmail",
-//             userPhone: "$userPhone",
-//             cardId: "$clicks.cardId",
-//             cardName: "$clicks.cardName",
-//           },
-//           clickCount: { $sum: "$clicks.clickCount" },
-//           clickTimes: { $push: "$clicks.clickTimes" },
-//         },
-//       },
-//       {
-//         $sort: {
-//           "_id.userName": 1,
-//           "_id.cardName": 1,
-//         },
-//       },
-//     ]);
-
-//     // Flatten clickTimes array because each clickTimes is an array itself
-//     const results = logs.map((log) => {
-//       const flattenedTimes = log.clickTimes.flat();
-//       return {
-//         userId: log._id.userId,
-//         userName: log._id.userName,
-//         userEmail: log._id.userEmail,
-//         userPhone: log._id.userPhone,
-//         cardId: log._id.cardId,
-//         cardName: log._id.cardName,
-//         clickCount: log.clickCount,
-//         clickTimes: flattenedTimes.map((ts) =>
-//           new Date(ts).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-//         ),
-//       };
-//     });
-
-//     return res.status(200).json({ data: results });
-//   } catch (error) {
-//     console.error("Error displaying link logs:", error);
-//     return res
-//       .status(500)
-//       .json({ message: "Server error", error: error.message });
-//   }
-// };
-
 export const displayLinkLog = async (req, res) => {
   try {
     const logs = await LinkLog.aggregate([
@@ -260,47 +209,186 @@ export const displayLinkLog = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
-
-// export const displayLinkLog = async (req, res) => {
+// export const addHomeLinkLog = async (req, res) => {
 //   try {
-//     const logs = await LinkLog.aggregate([
-//       { $unwind: "$clicks" },
-//       { $unwind: "$clicks.clickTimes" },
-//       {
-//         $group: {
-//           _id: {
-//             date: {
-//               $dateToString: { format: "%Y-%m-%d", date: "$clicks.clickTimes" },
-//             },
-//             userEmail: "$userEmail",
-//             cardName: "$clicks.cardName",
-//           },
-//           clickTimes: { $push: "$clicks.clickTimes" }, // capture each time
-//           dailyClickCount: { $sum: 1 }, // count each occurrence
-//         },
-//       },
-//       {
-//         $sort: {
-//           "_id.date": -1,
-//           "_id.userEmail": 1,
-//           "_id.cardName": 1,
-//         },
-//       },
-//     ]);
+//     const { userId, cardId, cardName } = req.body;
+//     console.log("🚀 ~ addLinkLog ~ req.body:", req.body);
 
-//     const results = logs.map((log) => ({
-//       date: log._id.date,
-//       userEmail: log._id.userEmail,
-//       cardName: log._id.cardName,
-//       dailyClickCount: log.dailyClickCount,
-//       clickTimes: log.clickTimes,
-//     }));
+//     // Find user
+//     const user = await DeviceToken.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
 
-//     return res.status(200).json({ data: results });
+//     // Find card if cardId is provided
+//     let card = null;
+//     if (cardId) {
+//       card = await Card.findById(cardId);
+//       if (!card) {
+//         return res.status(404).json({ message: "Card not found." });
+//       }
+//     }
+
+//     // Current IST time
+//     const istTime = new Date().toLocaleString("en-US", {
+//       timeZone: "Asia/Kolkata",
+//     });
+//     const currentISTDate = new Date(istTime);
+
+//     // Find existing log for user
+//     let existingLog = await LinkLog.findOne({ userId });
+
+//     // Prepare clickData
+//     const clickData = {
+//       cardId: card ? card._id : null,
+//       cardName: card ? card.name : cardName || "No Card",
+//       clickTimes: [currentISTDate],
+//       clickCount: 1,
+//     };
+
+//     if (!existingLog) {
+//       // Create new log document for user
+//       const newLog = new LinkLog({
+//         userId: user._id,
+//         userName: user.username,
+//         userPhone: user.phone,
+//         userEmail: user.email,
+//         clicks: [clickData],
+//       });
+//       await newLog.save();
+//       return res
+//         .status(201)
+//         .json({ message: "New user log created", log: newLog });
+//     }
+
+//     // User already has log, check if this card or cardName already exists
+//     const cardLog = existingLog.clicks.find((click) => {
+//       if (card && click.cardId) {
+//         // Both have cardId, match by ObjectId
+//         return click.cardId.toString() === card._id.toString();
+//       } else if (!card && !click.cardId) {
+//         // Both have no cardId, match by cardName (case-insensitive)
+//         return (
+//           click.cardName.toLowerCase() === (cardName || "No Card").toLowerCase()
+//         );
+//       }
+//       return false;
+//     });
+
+//     if (cardLog) {
+//       // Update existing click record
+//       cardLog.clickTimes.push(currentISTDate);
+//       cardLog.clickCount += 1;
+//     } else {
+//       // Add new click record
+//       existingLog.clicks.push(clickData);
+//     }
+
+//     await existingLog.save();
+
+//     return res
+//       .status(200)
+//       .json({ message: "Click recorded", log: existingLog });
 //   } catch (error) {
-//     console.error("Error displaying link logs:", error);
+//     console.error("Error logging click:", error);
 //     return res
 //       .status(500)
 //       .json({ message: "Server error", error: error.message });
 //   }
 // };
+
+export const addHomeLinkLog = async (req, res) => {
+  const { cardId, userId } = req.body;
+  console.log("🚀 ~ addHomeLinkLog ~ req.body:", req.body);
+
+  try {
+    await CardClick.create({
+      card: cardId,
+      user: userId,
+    });
+
+    res.status(200).json({ message: "Click logged" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to log click" });
+  }
+};
+
+export const displayHomeLinkLog = async (req, res) => {
+  try {
+    const stats = await CardClick.aggregate([
+      // Group by card, user, and date (to remove multiple clicks per user/day)
+      {
+        $group: {
+          _id: {
+            card: "$card",
+            user: "$user",
+            year: { $year: "$clickedAt" },
+            month: { $month: "$clickedAt" },
+            day: { $dayOfMonth: "$clickedAt" },
+          },
+          clickedAt: { $first: "$clickedAt" }
+        }
+      },
+      // Group by card and date again to gather users per day
+      {
+        $group: {
+          _id: {
+            card: "$_id.card",
+            year: "$_id.year",
+            month: "$_id.month",
+            day: "$_id.day"
+          },
+          users: { $addToSet: "$_id.user" },
+          date: { $first: "$clickedAt" }
+        }
+      },
+      // Lookup card details
+      {
+        $lookup: {
+          from: "cards",
+          localField: "_id.card",
+          foreignField: "_id",
+          as: "cardDetails"
+        }
+      },
+      { $unwind: "$cardDetails" },
+
+      // Lookup user details (emails)
+      {
+        $lookup: {
+          from: "devicetokens",
+          localField: "users",
+          foreignField: "_id",
+          as: "userDetails"
+        }
+      },
+
+      {
+        $project: {
+          _id: 0,
+          cardId: "$cardDetails._id",
+          cardName: "$cardDetails.name",
+          headline: "$cardDetails.headline",
+          date: {
+            $dateFromParts: {
+              year: "$_id.year",
+              month: "$_id.month",
+              day: "$_id.day"
+            }
+          },
+          count: { $size: "$users" },
+          userEmails: "$userDetails.email"
+        }
+      },
+      {
+        $sort: { date: -1 }
+      }
+    ]);
+
+    res.json(stats);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch card daily click stats" });
+  }
+};
