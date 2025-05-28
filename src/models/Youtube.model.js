@@ -16,7 +16,7 @@ const youtubeSchema = new mongoose.Schema(
     },
     platform: {
       type: String,
-      enum: ["mobile", "web"], // Corrected enum
+      enum: ["mobile", "web", "both"], // Corrected enum
       // required: true, // Ensures platform is always provided
     },
   },

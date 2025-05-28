@@ -151,7 +151,7 @@ import {
 } from "../controllers/notification/group.controller.js";
 import { loginUser } from "../controllers/user/user.controller.js";
 import {
-  addHomeLinkLog,
+  // addHomeLinkLog,
   addLinkLog,
   displayHomeLinkLog,
   displayLinkLog,
@@ -370,7 +370,7 @@ router.get("/get_perticular_card/:cardName", getSingelCard);
 router.post("/addClick", addLinkLog);
 router.get("/displayClick", displayLinkLog);
 
-router.post("/addHomeClick", addHomeLinkLog);
+// router.post("/addHomeClick", addHomeLinkLog);
 router.get("/displayHomeClick", displayHomeLinkLog);
 
 export default router;

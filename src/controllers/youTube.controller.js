@@ -2,8 +2,10 @@ import YouTube from "../models/Youtube.model.js";
 import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 export const showMobileYoutubeLinks = async (req, res) => {
   try {
-    const allLinks = await YouTube.find({ platform: "mobile" })
-      .sort({ createdAt: -1 }) // Or use { _id: -1 } if no createdAt field
+    const allLinks = await YouTube.find({
+      platform: { $in: ["mobile", "both"] },
+    })
+      .sort({ createdAt: -1 })
       .limit(5);
 
     res.status(200).json({ links: allLinks });
@@ -44,7 +46,9 @@ export const addYoutubeLinks = async (req, res) => {
 
 export const showWebYoutubeLinks = async (req, res) => {
   try {
-    const allLinks = await YouTube.find({ platform: "web" })
+    const allLinks = await YouTube.find({
+      platform: { $in: ["web", "both"] },
+    })
       .sort({ createdAt: -1 }) // Sort by latest first
       .limit(5); // Limit to 5 results
 

@@ -74,230 +74,72 @@ import CardClick from "../../models/LinkLogs/cardClickSchema.js";
 //   }
 // };
 
-export const addLinkLog = async (req, res) => {
-  try {
-    const { userId, cardId, cardName } = req.body;
-    console.log("🚀 ~ addLinkLog ~ req.body:", req.body);
-
-    // Find user
-    const user = await DeviceToken.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    // Find card if cardId is provided
-    let card = null;
-    if (cardId) {
-      card = await Card.findById(cardId);
-      if (!card) {
-        return res.status(404).json({ message: "Card not found." });
-      }
-    }
-
-    // Current IST time
-    const istTime = new Date().toLocaleString("en-US", {
-      timeZone: "Asia/Kolkata",
-    });
-    const currentISTDate = new Date(istTime);
-
-    // Find existing log for user
-    let existingLog = await LinkLog.findOne({ userId });
-
-    // Prepare clickData
-    const clickData = {
-      cardId: card ? card._id : null,
-      cardName: card ? card.name : cardName || "No Card",
-      clickTimes: [currentISTDate],
-      clickCount: 1,
-    };
-
-    if (!existingLog) {
-      // Create new log document for user
-      const newLog = new LinkLog({
-        userId: user._id,
-        userName: user.username,
-        userPhone: user.phone,
-        userEmail: user.email,
-        clicks: [clickData],
-      });
-      await newLog.save();
-      return res
-        .status(201)
-        .json({ message: "New user log created", log: newLog });
-    }
-
-    // User already has log, check if this card or cardName already exists
-    const cardLog = existingLog.clicks.find((click) => {
-      if (card && click.cardId) {
-        // Both have cardId, match by ObjectId
-        return click.cardId.toString() === card._id.toString();
-      } else if (!card && !click.cardId) {
-        // Both have no cardId, match by cardName (case-insensitive)
-        return (
-          click.cardName.toLowerCase() === (cardName || "No Card").toLowerCase()
-        );
-      }
-      return false;
-    });
-
-    if (cardLog) {
-      // Update existing click record
-      cardLog.clickTimes.push(currentISTDate);
-      cardLog.clickCount += 1;
-    } else {
-      // Add new click record
-      existingLog.clicks.push(clickData);
-    }
-
-    await existingLog.save();
-
-    return res
-      .status(200)
-      .json({ message: "Click recorded", log: existingLog });
-  } catch (error) {
-    console.error("Error logging click:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
-};
-
 export const displayLinkLog = async (req, res) => {
   try {
-    const logs = await LinkLog.aggregate([
-      { $unwind: "$clicks" },
-      { $unwind: "$clicks.clickTimes" },
+    const clicks = await CardClick.aggregate([
+      {
+        $project: {
+          card: 1,
+          user: 1,
+          clickedAt: 1,
+          dateOnly: {
+            $dateToString: { format: "%Y-%m-%d", date: "$clickedAt" },
+          },
+          timeOnly: {
+            $dateToString: { format: "%H:%M:%S", date: "$clickedAt" },
+          },
+        },
+      },
       {
         $group: {
           _id: {
-            date: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: "$clicks.clickTimes",
-                timezone: "Asia/Kolkata", // 👈 Indian Time
-              },
-            },
-            userEmail: "$userEmail",
-            cardName: "$clicks.cardName",
+            card: "$card",
+            user: "$user",
+            date: "$dateOnly",
           },
-          clickTimes: { $push: "$clicks.clickTimes" },
-          dailyClickCount: { $sum: 1 },
+          times: { $push: "$timeOnly" },
+          clickCount: { $sum: 1 },
         },
       },
       {
-        $sort: {
-          "_id.date": -1,
-          "_id.userEmail": 1,
-          "_id.cardName": 1,
+        $lookup: {
+          from: "cards",
+          localField: "_id.card",
+          foreignField: "_id",
+          as: "cardDetails",
         },
       },
+      {
+        $lookup: {
+          from: "devicetokens",
+          localField: "_id.user",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$cardDetails" },
+      { $unwind: "$userDetails" },
+      {
+        $project: {
+          _id: 0,
+          userEmail: "$userDetails.email",
+          cardName: "$cardDetails.name",
+          date: "$_id.date",
+          clickCount: 1,
+          times: 1,
+        },
+      },
+      { $sort: { date: -1 } },
     ]);
 
-    const results = logs.map((log) => ({
-      date: log._id.date,
-      userEmail: log._id.userEmail,
-      cardName: log._id.cardName,
-      dailyClickCount: log.dailyClickCount,
-      clickTimes: log.clickTimes,
-    }));
-
-    return res.status(200).json({ data: results });
+    res.json(clicks);
   } catch (error) {
-    console.error("Error displaying link logs:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch click data" });
   }
 };
-// export const addHomeLinkLog = async (req, res) => {
-//   try {
-//     const { userId, cardId, cardName } = req.body;
-//     console.log("🚀 ~ addLinkLog ~ req.body:", req.body);
 
-//     // Find user
-//     const user = await DeviceToken.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found." });
-//     }
-
-//     // Find card if cardId is provided
-//     let card = null;
-//     if (cardId) {
-//       card = await Card.findById(cardId);
-//       if (!card) {
-//         return res.status(404).json({ message: "Card not found." });
-//       }
-//     }
-
-//     // Current IST time
-//     const istTime = new Date().toLocaleString("en-US", {
-//       timeZone: "Asia/Kolkata",
-//     });
-//     const currentISTDate = new Date(istTime);
-
-//     // Find existing log for user
-//     let existingLog = await LinkLog.findOne({ userId });
-
-//     // Prepare clickData
-//     const clickData = {
-//       cardId: card ? card._id : null,
-//       cardName: card ? card.name : cardName || "No Card",
-//       clickTimes: [currentISTDate],
-//       clickCount: 1,
-//     };
-
-//     if (!existingLog) {
-//       // Create new log document for user
-//       const newLog = new LinkLog({
-//         userId: user._id,
-//         userName: user.username,
-//         userPhone: user.phone,
-//         userEmail: user.email,
-//         clicks: [clickData],
-//       });
-//       await newLog.save();
-//       return res
-//         .status(201)
-//         .json({ message: "New user log created", log: newLog });
-//     }
-
-//     // User already has log, check if this card or cardName already exists
-//     const cardLog = existingLog.clicks.find((click) => {
-//       if (card && click.cardId) {
-//         // Both have cardId, match by ObjectId
-//         return click.cardId.toString() === card._id.toString();
-//       } else if (!card && !click.cardId) {
-//         // Both have no cardId, match by cardName (case-insensitive)
-//         return (
-//           click.cardName.toLowerCase() === (cardName || "No Card").toLowerCase()
-//         );
-//       }
-//       return false;
-//     });
-
-//     if (cardLog) {
-//       // Update existing click record
-//       cardLog.clickTimes.push(currentISTDate);
-//       cardLog.clickCount += 1;
-//     } else {
-//       // Add new click record
-//       existingLog.clicks.push(clickData);
-//     }
-
-//     await existingLog.save();
-
-//     return res
-//       .status(200)
-//       .json({ message: "Click recorded", log: existingLog });
-//   } catch (error) {
-//     console.error("Error logging click:", error);
-//     return res
-//       .status(500)
-//       .json({ message: "Server error", error: error.message });
-//   }
-// };
-
-export const addHomeLinkLog = async (req, res) => {
+export const addLinkLog = async (req, res) => {
   const { cardId, userId } = req.body;
   console.log("🚀 ~ addHomeLinkLog ~ req.body:", req.body);
 
@@ -327,8 +169,8 @@ export const displayHomeLinkLog = async (req, res) => {
             month: { $month: "$clickedAt" },
             day: { $dayOfMonth: "$clickedAt" },
           },
-          clickedAt: { $first: "$clickedAt" }
-        }
+          clickedAt: { $first: "$clickedAt" },
+        },
       },
       // Group by card and date again to gather users per day
       {
@@ -337,11 +179,11 @@ export const displayHomeLinkLog = async (req, res) => {
             card: "$_id.card",
             year: "$_id.year",
             month: "$_id.month",
-            day: "$_id.day"
+            day: "$_id.day",
           },
           users: { $addToSet: "$_id.user" },
-          date: { $first: "$clickedAt" }
-        }
+          date: { $first: "$clickedAt" },
+        },
       },
       // Lookup card details
       {
@@ -349,8 +191,8 @@ export const displayHomeLinkLog = async (req, res) => {
           from: "cards",
           localField: "_id.card",
           foreignField: "_id",
-          as: "cardDetails"
-        }
+          as: "cardDetails",
+        },
       },
       { $unwind: "$cardDetails" },
 
@@ -360,8 +202,8 @@ export const displayHomeLinkLog = async (req, res) => {
           from: "devicetokens",
           localField: "users",
           foreignField: "_id",
-          as: "userDetails"
-        }
+          as: "userDetails",
+        },
       },
 
       {
@@ -374,16 +216,16 @@ export const displayHomeLinkLog = async (req, res) => {
             $dateFromParts: {
               year: "$_id.year",
               month: "$_id.month",
-              day: "$_id.day"
-            }
+              day: "$_id.day",
+            },
           },
           count: { $size: "$users" },
-          userEmails: "$userDetails.email"
-        }
+          userEmails: "$userDetails.email",
+        },
       },
       {
-        $sort: { date: -1 }
-      }
+        $sort: { date: -1 },
+      },
     ]);
 
     res.json(stats);
