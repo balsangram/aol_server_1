@@ -2,6 +2,7 @@ import UserType from "../models/UserType.model.js";
 import Action from "../models/Action.model.js";
 import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js";
 import DeviceToken from "../models/notification/deviceToken.model.js";
+import Card from "../models/Card.model.js";
 // import { parse } from "dotenv";
 // Show All Cards
 export const userType = async (req, res) => {
@@ -227,7 +228,7 @@ export const changeHomeLikeOrDislike = async (req, res) => {
     const { id } = req.params; // Assuming you're passing `id` in the route parameter
     const { cardId } = req.body;
     const exist = await DeviceToken.findById(id);
-    const exisstcardId = await UserType.findById(cardId);
+    const exisstcardId = await Card.findById(cardId);
     if (!exist) {
       return res.status(404).json({ message: "Device not found." });
     }
@@ -241,7 +242,7 @@ export const changeHomeLikeOrDislike = async (req, res) => {
       await exist.save();
     } else {
       console.log("available");
-      // Remove the cardId from the array 
+      // Remove the cardId from the array
       exist.CardTypes = exist.CardTypes.filter(
         (id) => id.toString() !== cardId
       );
