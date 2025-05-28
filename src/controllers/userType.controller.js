@@ -269,7 +269,7 @@ export const singleHomeuserType = async (req, res) => {
     const { id } = req.params;
 
     // Find device token and populate associated userTypes
-    const user = await DeviceToken.findById(id).select("CardTypes");    
+    const user = await DeviceToken.findById(id).select("CardTypes");
 
     if (!user) {
       return res.status(404).json({ message: "DeviceToken not found" });
@@ -289,6 +289,48 @@ export const singleHomeuserType = async (req, res) => {
       // nonFavoriteAuthors,
       CardTypes,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const favouriteCardDisplay = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await DeviceToken.findById(id).select("userTypes");
+
+    if (!user) {
+      return res.status(404).json({ message: "DeviceToken not found" });
+    }
+
+    const userTypesIds = user.userTypes;
+    console.log("🚀 ~ singleuserType ~ userTypes:", userTypesIds);
+    const userTypes = await UserType.find({ _id: { $in: userTypesIds } });
+
+    console.log("🚀 ~ favouriteCardDisplay ~ userTypes:", userTypes);
+
+    res.status(200).json({ userTypes });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const favouriteHomeCardDisplay = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await DeviceToken.findById(id).select("CardTypes");
+    console.log("🚀 ~ favouriteHomeCardDisplay ~ user:", user);
+
+    if (!user) {
+      return res.status(404).json({ message: "DeviceToken not found" });
+    }
+
+    const userTypesIds = user.CardTypes;
+    console.log("🚀 ~ singleuserType ~ userTypes:", userTypesIds);
+    const userTypes = await Card.find({ _id: { $in: userTypesIds } });
+
+    console.log("🚀 ~ favouriteCardDisplay ~ userTypes:", userTypes);
+
+    res.status(200).json({ userTypes });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

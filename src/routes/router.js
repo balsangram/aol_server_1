@@ -31,6 +31,8 @@ import {
   changeHomeLikeOrDislike,
   changeLikeOrDislike,
   deleteUserType,
+  favouriteCardDisplay,
+  favouriteHomeCardDisplay,
   singleHomeuserType,
   singleuserType,
   updateUserType,
@@ -214,8 +216,8 @@ router.delete("/deleteUSerType/:id", deleteUserType);
 router.post("/userType_importance/:id", changeLikeOrDislike);
 router.post("/homeCard_importance/:id", changeHomeLikeOrDislike);
 
-// router.get("/displayFavouriteInternal/:id",)
-// router.get("/displayFavouriteHome/:id",)
+router.get("/displayFavouriteInternal/:id", favouriteCardDisplay);
+router.get("/displayFavouriteHome/:id", favouriteHomeCardDisplay);
 
 //actions
 router.get("/displayAction/:usertype", action);

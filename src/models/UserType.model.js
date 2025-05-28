@@ -27,7 +27,7 @@ const userTypeSchema = new mongoose.Schema(
 userTypeSchema.pre("save", function (next) {
   this.name = this.usertype;
   next();
-});
+}); 
 
 const UserType = mongoose.model("UserType", userTypeSchema);
 export default UserType;
