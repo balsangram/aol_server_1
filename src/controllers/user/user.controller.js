@@ -50,7 +50,9 @@ export const loginUser = async (req, res) => {
 
     // Must provide either email or phone
     if (!email && !phone) {
-      return res.status(400).json({ message: "Email or phone number is required." });
+      return res
+        .status(400)
+        .json({ message: "Email or phone number is required." });
     }
 
     let user;
@@ -58,11 +60,13 @@ export const loginUser = async (req, res) => {
     // If email is provided
     if (email) {
       user = await DeviceToken.findOne({ email });
-    } 
+    }
     // If phone is provided
     else if (phone) {
       if (!country_code) {
-        return res.status(400).json({ message: "Country code is required when using phone number." });
+        return res.status(400).json({
+          message: "Country code is required when using phone number.",
+        });
       }
 
       user = await DeviceToken.findOne({ phone, country_code });
@@ -87,8 +91,6 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
-
-
 
 export const registerUser = async (req, res) => {
   try {
@@ -120,7 +122,7 @@ export const registerUser = async (req, res) => {
       email,
       country_code,
       phone,
-      token: "",
+      token: null,
     });
 
     await newUser.save();
