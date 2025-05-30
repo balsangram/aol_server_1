@@ -149,7 +149,10 @@ import {
   getAllGroupsWithDeviceTokens,
   updateGroupUser,
 } from "../controllers/notification/group.controller.js";
-import { loginUser } from "../controllers/user/user.controller.js";
+import {
+  loginUser,
+  registerUser,
+} from "../controllers/user/user.controller.js";
 import {
   // addHomeLinkLog,
   addLinkLog,
@@ -179,6 +182,7 @@ router.post("/adminLogin", loginAdmin);
 
 // user
 router.post("/userLogin", loginUser);
+router.post("/userRegister", registerUser);
 
 // customer functionality
 // router.post("/userRegister", registerCustomer);

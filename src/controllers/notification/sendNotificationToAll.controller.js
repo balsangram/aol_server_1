@@ -494,6 +494,7 @@ export const sendSingleNotification = async (req, res) => {
 // };
 export const saveAndSubscribeToken = async (req, res) => {
   const { token, username, email, phone } = req.body;
+  console.log("🚀 ~ saveAndSubscribeToken ~ req.body:", req.body)
 
   // Validate input
   if (!token || typeof token !== "string") {

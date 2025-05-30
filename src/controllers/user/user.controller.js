@@ -45,64 +45,96 @@ import DeviceToken from "../../models/notification/deviceToken.model.js"; // Upd
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, phone, token } = req.body;
+    const { email, phone, country_code, token } = req.body;
     console.log("🚀 ~ loginUser ~ req.body:", req.body);
 
-    if (!email || !phone) {
-      return res.status(400).json({ message: "All fields are required." });
+    // Must provide either email or phone
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone number is required." });
     }
 
-    const emailMatch = await DeviceToken.findOne({ email });
-    const phoneMatch = await DeviceToken.findOne({ phone });
+    let user;
 
-    if (!emailMatch && !phoneMatch) {
-      // New user: allow login (or signup flow)
-      return res.status(201).json({ message: "Login allowed (new user)" });
-    }
-
-    if (emailMatch && phoneMatch) {
-      if (emailMatch._id.toString() === phoneMatch._id.toString()) {
-        // Email and phone belong to the same user
-        // If token provided and different, update it
-        if (token && emailMatch.token !== token) {
-          emailMatch.token = token;
-          await emailMatch.save();
-          return res.status(200).json({
-            message: "Login successful, token updated",
-            user: emailMatch,
-          });
-        }
-        return res
-          .status(200)
-          .json({ message: "Login successful", user: emailMatch });
-      } else {
-        // Email and phone belong to different users — conflict
-        return res.status(400).json({
-          message: "Email and phone belong to different users.",
-        });
+    // If email is provided
+    if (email) {
+      user = await DeviceToken.findOne({ email });
+    } 
+    // If phone is provided
+    else if (phone) {
+      if (!country_code) {
+        return res.status(400).json({ message: "Country code is required when using phone number." });
       }
+
+      user = await DeviceToken.findOne({ phone, country_code });
     }
 
-    // Partial match cases:
-    // If email exists only:
-    if (emailMatch && !phoneMatch) {
-      return res.status(400).json({
-        message: "Email already exists but phone doesn't match.",
-      });
-    }
-    // If phone exists only:
-    if (!emailMatch && phoneMatch) {
-      return res.status(400).json({
-        message: "Phone already exists but email doesn't match.",
-      });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
     }
 
-    // Default fallback error
-    return res.status(400).json({
-      message: "Email or phone already exists. Please check your credentials.",
-    });
+    // Add token if provided and not already in the array
+    if (token && (!Array.isArray(user.token) || !user.token.includes(token))) {
+      if (!Array.isArray(user.token)) {
+        user.token = [];
+      }
+      user.token.push(token);
+      await user.save();
+    }
+
+    return res.status(200).json({ message: "Login successful", user });
   } catch (error) {
     console.error("❌ Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
   }
+};
+
+
+
+export const registerUser = async (req, res) => {
+  try {
+    const { first_name, last_name, email, country_code, phone } = req.body;
+    console.log("🚀 ~ registerUser ~ req.body:", req.body);
+
+    // Check required fields
+    if (!first_name || !last_name || !country_code || !email || !phone) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided ." });
+    }
+
+    // Check if email or phone already exists
+    const existingUser = await DeviceToken.findOne({
+      $or: [{ email }, { phone }],
+    });
+
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "Email or phone number already exists." });
+    }
+
+    // Create new user
+    const newUser = new DeviceToken({
+      first_name,
+      last_name,
+      email,
+      country_code,
+      phone,
+      token: "",
+    });
+
+    await newUser.save();
+
+    return res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (error) {
+    console.error("Registration Error:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const OTPConnection = async (req, res) => {
+  try {
+  } catch (error) {}
 };
