@@ -6,7 +6,9 @@ export const loginUser = async (req, res) => {
     console.log("🚀 ~ loginUser ~ req.body:", req.body);
 
     if (!email && !phone) {
-      return res.status(400).json({ message: "Email or phone number is required." });
+      return res
+        .status(400)
+        .json({ message: "Email or phone number is required." });
     }
 
     let query;
@@ -14,7 +16,9 @@ export const loginUser = async (req, res) => {
       query = { email };
     } else {
       if (!country_code) {
-        return res.status(400).json({ message: "Country code is required when using phone number." });
+        return res.status(400).json({
+          message: "Country code is required when using phone number.",
+        });
       }
       query = { phone, country_code };
     }
@@ -37,12 +41,13 @@ export const loginUser = async (req, res) => {
   } catch (error) {
     console.error("❌ Login error:", error);
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Token, email, or phone already exists." });
+      return res
+        .status(400)
+        .json({ message: "Token, email, or phone already exists." });
     }
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
-
 
 export const registerUser = async (req, res) => {
   try {
@@ -88,11 +93,12 @@ export const registerUser = async (req, res) => {
   }
 };
 
-export const OTPConnection = async (req, res) => {
+export const OTPCheck = async (req, res) => {
   try {
   } catch (error) {}
 };
-export const OTPCheck = async (req, res) => {
+
+export const deleteUser = async (req, res) => {
   try {
   } catch (error) {}
 };
