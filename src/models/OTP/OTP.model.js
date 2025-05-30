@@ -1,7 +1,14 @@
-// src/models/OTP/OTP.model.js
 import mongoose from "mongoose";
 
 const otpSchema = new mongoose.Schema({
+  //   userid: {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: "DeviceToken", // Assuming your user model is named 'DeviceToken'
+  //     required: true,
+  //   },
+  userid: {
+    type: String,
+  },
   type: {
     type: String,
     enum: ["email", "phone"],
@@ -25,8 +32,9 @@ const otpSchema = new mongoose.Schema({
   },
 });
 
+// TTL index to auto-remove expired OTPs
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const OtpModel = mongoose.model("Otp", otpSchema); // Use 'Otp' for collection name 'otps'
+const OtpModel = mongoose.model("Otp", otpSchema);
 
 export default OtpModel;
