@@ -150,6 +150,7 @@ import {
   updateGroupUser,
 } from "../controllers/notification/group.controller.js";
 import {
+  deleteUser,
   loginUser,
   registerUser,
 } from "../controllers/user/user.controller.js";
@@ -183,6 +184,7 @@ router.post("/adminLogin", loginAdmin);
 // user
 router.post("/userLogin", loginUser);
 router.post("/userRegister", registerUser);
+router.delete("/userDelet/:id", deleteUser);
 
 // customer functionality
 // router.post("/userRegister", registerCustomer);
