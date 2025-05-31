@@ -152,6 +152,7 @@ import {
 import {
   deleteUser,
   loginUser,
+  logoutuser,
   OTPCheck,
   registerUser,
 } from "../controllers/user/user.controller.js";
@@ -187,6 +188,7 @@ router.post("/userLogin", loginUser);
 router.post("/userRegister", registerUser);
 router.delete("/userDelet/:id", deleteUser);
 router.post("/OTPCheck/:id", OTPCheck);
+router.patch("/logout", logoutuser);
 
 // customer functionality
 // router.post("/userRegister", registerCustomer);
@@ -282,7 +284,7 @@ router.post("/deviceToken", saveAndSubscribeToken);
 router.get("/display_notification", displayAllNotification);
 router.get("/countDeviceTokens", countDeviceTokens);
 router.get("/displayAllUSer", displayUser);
-router.patch("/logout", logoutAndUnsubscribeToken);
+// router.patch("/logout", logoutAndUnsubscribeToken);
 
 router.get("/searchUser", searchUser);
 

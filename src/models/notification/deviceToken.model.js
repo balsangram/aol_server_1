@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const deviceTokenSchema = new mongoose.Schema(
   {
-    token: { type: String, unique: true },
+    token: { type: String },
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },

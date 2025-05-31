@@ -596,6 +596,8 @@ export const countDeviceTokens = async (req, res) => {
     res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+
 export const logoutAndUnsubscribeToken = async (req, res) => {
   console.log("came in logout.,..");
 
@@ -629,6 +631,8 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
     });
   }
 };
+
+
 export const displayUser = async (req, res) => {
   try {
     const devices = await DeviceToken.find();

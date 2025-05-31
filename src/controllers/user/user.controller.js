@@ -120,7 +120,7 @@ export const loginUser = async (req, res) => {
     return res.status(200).json({
       message: "Login successful. OTP has been generated or updated.",
       user,
-       // ⚠️ Show only in development
+      // ⚠️ Show only in development
     });
   } catch (error) {
     console.error("❌ Login error:", error);
@@ -251,5 +251,32 @@ export const deleteUser = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Failed to delete user.", error: error.message });
+  }
+};
+
+export const logoutuser = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  try {
+    const updatedUser = await DeviceToken.findByIdAndUpdate(
+      userId,
+      { $set: { token: null } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Logout successful", user: updatedUser });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
