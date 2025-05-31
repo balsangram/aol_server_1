@@ -3,12 +3,58 @@ import { uploadCloudinary, uploadToCloudinary } from "../utils/cloudnary.js"; //
 
 // Add a new popup (store image in Cloudinary)
 
-import { scheduleImageRevert } from "../utils/cronJobs/popUpScheduler.js";
+// import { scheduleImageRevert } from "../utils/cronJobs/popUpScheduler.js";
+
+// export const addPopUp = async (req, res) => {
+//   try {
+//     const file = req.file;
+//     const { liveTime } = req.body;
+
+//     // Validate file
+//     if (!file) {
+//       return res.status(400).json({ message: "Image file is required" });
+//     }
+//     if (!file.mimetype.startsWith("image/")) {
+//       return res.status(400).json({ message: "Only image files are allowed" });
+//     }
+//     if (file.size > 5 * 1024 * 1024) {
+//       return res.status(400).json({ message: "Image size exceeds 5MB limit" });
+//     }
+
+//     // Parse liveTime or default to now
+//     let liveTimeDate = liveTime ? new Date(liveTime) : new Date();
+//     if (isNaN(liveTimeDate.getTime())) {
+//       return res.status(400).json({ message: "Invalid liveTime format" });
+//     }
+
+//     // Upload to Cloudinary
+//     const result = await uploadToCloudinary(file.buffer, file.originalname);
+//     if (!result?.secure_url) {
+//       throw new Error("Failed to upload image to Cloudinary");
+//     }
+
+//     // Save to DB
+//     const newPopUp = new PopUp({
+//       img: result.secure_url,
+//       liveTime: liveTimeDate,
+//     });
+
+//     await newPopUp.save();
+
+//     res.status(201).json({
+//       message: "Popup added successfully",
+//       popup: newPopUp,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
 
 export const addPopUp = async (req, res) => {
   try {
     const file = req.file;
-    const { liveTime, defaultImage } = req.body;
+    const { liveTime } = req.body;
 
     // Validate file
     if (!file) {
@@ -21,22 +67,26 @@ export const addPopUp = async (req, res) => {
       return res.status(400).json({ message: "Image size exceeds 5MB limit" });
     }
 
-    // Validate inputs
-    if (!liveTime) {
-      return res.status(400).json({ message: "Live time is required" });
-    }
-    if (!defaultImage && !process.env.DEFAULT_POPUP_IMAGE) {
-      return res.status(400).json({ message: "Default image is required" });
+    // Parse custom format liveTime ("hh-mm-dd-MM-yyyy")
+    let liveTimeDate;
+    if (liveTime) {
+      const parts = liveTime.split("-"); // ["11", "02", "27", "05", "2025"]
+      if (parts.length === 5) {
+        const [hh, mm, dd, MM, yyyy] = parts.map(Number);
+        liveTimeDate = new Date(yyyy, MM - 1, dd, hh, mm);
+      } else {
+        return res
+          .status(400)
+          .json({
+            message: "Invalid liveTime format. Expected hh-mm-dd-MM-yyyy",
+          });
+      }
+    } else {
+      liveTimeDate = new Date(); // default to now
     }
 
-    const liveTimeDate = new Date(liveTime);
     if (isNaN(liveTimeDate.getTime())) {
-      return res.status(400).json({ message: "Invalid liveTime format" });
-    }
-    if (liveTimeDate <= new Date()) {
-      return res
-        .status(400)
-        .json({ message: "liveTime must be in the future" });
+      return res.status(400).json({ message: "Invalid date in liveTime" });
     }
 
     // Upload to Cloudinary
@@ -45,52 +95,24 @@ export const addPopUp = async (req, res) => {
       throw new Error("Failed to upload image to Cloudinary");
     }
 
-    // Create and save popup
+    // Save to DB
     const newPopUp = new PopUp({
-      currentImage: result.secure_url,
-      defaultImage: defaultImage || process.env.DEFAULT_POPUP_IMAGE,
+      img: result.secure_url,
       liveTime: liveTimeDate,
     });
 
-    try {
-      await newPopUp.save();
-    } catch (error) {
-      await cloudinary.uploader.destroy(result.public_id); // Clean up on failure
-      throw error;
-    }
-
-    // Schedule image reversion (using Agenda or similar)
-    await scheduleImageRevert(newPopUp._id, liveTimeDate);
-
-    // Format timestamps in IST
-    const istFormatter = new Intl.DateTimeFormat("en-IN", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
+    await newPopUp.save();
 
     res.status(201).json({
       message: "Popup added successfully",
-      popUp: {
-        ...newPopUp.toJSON(),
-        liveTimeIST: istFormatter.format(liveTimeDate),
-        createdAtIST: istFormatter.format(newPopUp.createdAt),
-        updatedAtIST: istFormatter.format(newPopUp.updatedAt),
-      },
+      popup: newPopUp,
     });
   } catch (error) {
-    console.error("❌ Error adding popup:", error);
-    res.status(500).json({
-      message: "Failed to add popup",
-      error: error.message,
-    });
+    console.error("❌ Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 // export const addPopUp = async (req, res) => {
 //   try {
 //     const file = req.file;
