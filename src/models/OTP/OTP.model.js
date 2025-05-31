@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const otpSchema = new mongoose.Schema({
-
   userid: {
     type: String,
   },

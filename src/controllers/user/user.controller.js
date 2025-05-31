@@ -58,80 +58,101 @@ export const loginUser = async (req, res) => {
     const { email, phone, country_code, token } = req.body;
     console.log("🚀 ~ loginUser ~ req.body:", req.body);
 
+    // Validate required fields
     if (!email && !phone) {
-      return res
-        .status(400)
-        .json({ message: "Email or phone number is required." });
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone number is required.",
+      });
     }
 
-    let query;
-    if (email) {
-      query = { email };
-    } else {
-      if (!country_code) {
-        return res.status(400).json({
-          message: "Country code is required when using phone number.",
-        });
-      }
-      query = { phone, country_code };
+    if (phone && !country_code) {
+      return res.status(400).json({
+        success: false,
+        message: "Country code is required when using phone number.",
+      });
     }
 
+    // Build query based on login method
+    const query = email ? { email } : { phone, country_code };
+
+    // Find user
     let user = await DeviceToken.findOne(query);
-
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
     }
 
-    // Update token if provided
+    // Update device token if provided
     if (token) {
-      await DeviceToken.updateOne(
+      user = await DeviceToken.findOneAndUpdate(
         { _id: user._id },
-        { $set: { token: token } }
+        { $set: { token } },
+        { new: true } // Return the updated document
       );
-      user = await DeviceToken.findById(user._id);
     }
 
     // Generate OTP
-    const otpValue = email ? "112233" : "445566"; // Use random generator in production
+    const otpValue = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
     const type = email ? "email" : "phone";
-    const identifier = email || `${country_code}${phone}`;
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const identifier = email ? email : `${country_code}${phone}`; // Fixed: Properly define identifier
 
-    // Check if OTP already exists for this user
-    const existingOtp = await OtpModel.findOne({ userid: user._id });
-
-    if (existingOtp) {
-      // Update existing OTP
-      existingOtp.type = type;
-      existingOtp.identifier = identifier;
-      existingOtp.otp = otpValue;
-      existingOtp.expiresAt = expiresAt;
-      await existingOtp.save();
-    } else {
-      // Create new OTP
-      await OtpModel.create({
-        userid: user._id,
+    // Upsert OTP (update if exists, create if not)
+    await OtpModel.findOneAndUpdate(
+      { userid: user._id },
+      {
         type,
         identifier,
         otp: otpValue,
         expiresAt,
-      });
+      },
+      { upsert: true, new: true }
+    );
+
+    // Send OTP via appropriate channel
+    if (email) {
+      try {
+        await sendmail(email, otpValue);
+        console.log(`OTP sent to ${email}`);
+      } catch (emailError) {
+        console.error("❌ Email sending failed:", emailError);
+        // Consider alternative notification method here
+      }
+    } else if (phone) {
+      // TODO: Implement SMS OTP sending
+      console.log(`SMS OTP would be sent to ${country_code}${phone}`);
     }
-    sendmail(email, otpValue);
 
     return res.status(200).json({
-      message: "Login successful. OTP has been generated or updated.",
-      user,
-      // ⚠️ Show only in development
+      success: true,
+      message: "OTP has been sent successfully",
+      user: {
+        _id: user._id,
+        email: user.email,
+        phone: user.phone,
+        country_code: user.country_code,
+      },
+      // Only include OTP in development for testing
+      ...(process.env.NODE_ENV === "development" && { otp: otpValue }),
     });
   } catch (error) {
     console.error("❌ Login error:", error);
+
     if (error.code === 11000) {
-      return res
-        .status(400)
-        .json({ message: "Token, email, or phone already exists." });
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate entry detected.",
+      });
     }
-    res.status(500).json({ message: "Login failed", error: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
@@ -181,51 +202,53 @@ export const registerUser = async (req, res) => {
 
 export const OTPCheck = async (req, res) => {
   try {
-    const { id } = req.params; // user id as string
+    const { id } = req.params;
+    // console.log("🚀 ~ OTPCheck ~ id:", id);
     const { otp, type } = req.body;
+    // console.log("🚀 ~ OTPCheck ~  otp, type:", otp, type);
 
-    // Validate inputs
-    if (!otp) {
-      return res.status(400).json({ message: "OTP is required." });
+    if (!otp || !type) {
+      return res.status(400).json({ message: "OTP and type are required." });
     }
 
-    if (!type) {
-      return res
-        .status(400)
-        .json({ message: "Type (email or phone) is required." });
-    }
+    const otpRecord = await OtpModel.findOne({ userid: id });
 
-    // Find OTP record for this user and type
-    const otpRecord = await OtpModel.findOne({ userid: id, type });
-
-    console.log("🚀 ~ OTPCheck ~ otpRecord:", otpRecord);
+    // console.log("🚀 ~ OTPCheck ~ otpRecord:", otpRecord);
     if (!otpRecord) {
       return res
         .status(404)
-        .json({ message: "No OTP found for this user and type." });
+        .json({ message: "No OTP found or it has expired." });
     }
 
     const now = new Date();
 
-    // Check if OTP matches and not expired
-    if (otpRecord.otp === otp && otpRecord.expiresAt > now) {
-      // OTP valid - delete so it can’t be reused
-      await OtpModel.deleteOne({ _id: otpRecord._id });
+    console.log(
+      "🚀 ~ OTPCheck ~ otpRecord.expiresAt:",
+      otpRecord.expiresAt > now
+    );
+    console.log("🚀 ~ OTPCheck ~ otp:", otpRecord.otp === otp);
+    console.log("🚀 ~ OTPCheck ~ otpRecord.otp:", otpRecord.otp);
 
-      // Respond with login success
+    // Validate OTP
+    if (otpRecord.otp === otp && otpRecord.expiresAt > now) {
+      await OtpModel.deleteOne({ _id: otpRecord._id }); // prevent reuse
       return res.status(200).json({
         message: "OTP verified successfully. Login successful.",
         userId: id,
       });
-    } else {
-      // OTP invalid or expired
-      return res.status(401).json({ message: "Invalid or expired OTP." });
     }
+
+    // If OTP expired or doesn't match
+    const reason = otpRecord.expiresAt <= now ? "expired" : "invalid";
+    console.log(reason, "reason");
+
+    return res.status(401).json({ message: `OTP is ${reason}.` });
   } catch (error) {
     console.error("❌ OTP Check error:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to verify OTP.", error: error.message });
+    return res.status(500).json({
+      message: "Failed to verify OTP.",
+      error: error.message,
+    });
   }
 };
 
