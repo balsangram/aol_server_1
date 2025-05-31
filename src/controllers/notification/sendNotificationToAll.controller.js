@@ -372,134 +372,86 @@ export const sendSingleNotification = async (req, res) => {
   }
 };
 
-// export const sendSingleNotification = async (req, res) => {
-//   const { title, body, selectedIds, NotificationTime } = req.body;
-//   console.log("Request body:", req.body);
+// export const saveAndSubscribeToken = async (req, res) => {
+//   const { token, username, email, phone } = req.body;
+//   console.log("🚀 ~ saveAndSubscribeToken ~ req.body:", req.body)
 
-//   if (
-//     !title ||
-//     !body ||
-//     !Array.isArray(selectedIds) ||
-//     selectedIds.length === 0
-//   ) {
-//     return res.status(400).json({
-//       message: "Title, body, and a non-empty array of user IDs are required.",
-//     });
+//   // Validate input
+//   if (!token || typeof token !== "string") {
+//     return res.status(400).json({ message: "Valid device token is required." });
 //   }
-//   const users = await DeviceToken.find({ _id: { $in: selectedIds } });
-//   const tokens = users.map((user) => user.token).filter(Boolean);
-//   if (tokens.length === 0) {
-//     return res.status(404).json({ message: "No valid device tokens found." });
-//   }
-
-//   const message = {
-//     tokens,
-//     notification: {
-//       title,
-//       body,
-//     },
-//     android: {
-//       priority: "high",
-//     },
-//     apns: {
-//       payload: {
-//         aps: {
-//           sound: "default",
-//         },
-//       },
-//     },
-//   };
-
 //   try {
-//     const now = new Date();
-//     let cronTime = "* * * * * *";
-//     // If NotificationTime is not given, send immediately
-//     let nowTime = new Date();
-//     if (NotificationTime) {
-//       nowTime = new Date(NotificationTime);
+//     // Subscribe token to the 'all' topic first
+//     const response = await admin.messaging().subscribeToTopic(token, "all");
+//     if (!response || response.failureCount > 0) {
+//       const errorInfo =
+//         response.errors?.[0]?.error ||
+//         "Unknown error while subscribing to topic.";
+//       console.log("FCM Subscription Error:");
 
-//       const minute = nowTime.getMinutes();
-//       const hour = nowTime.getHours();
-//       const day = nowTime.getDate();
-//       const month = nowTime.getMonth() + 1;
-//       cronTime = `${minute} ${hour} ${day} ${month} *`;
-//       if (nowTime < now) {
-//         return res.status(400).json({
-//           message: "NotificationTime must be in the future.",
-//         });
-//       }
-//     }
-
-//     let sentNotification = new Notification({
-//       title,
-//       body,
-//       status: "sent",
-//       sentAt: nowTime,
-//     });
-//     if (now < nowTime) {
-//       const job = new CronJob(
-//         cronTime,
-//         async function () {
-//           console.log("Executing scheduled task at IST time!");
-//           await admin.messaging().send(message);
-//           await sentNotification.save();
-//           job.stop();
-//         },
-//         null,
-//         true,
-//         "Asia/Kolkata"
-//       );
-//     } else {
-//       await admin.messaging().send(message);
-//       await sentNotification.save();
-//     }
-//     // console.log("🚀 ~ sendNotificationToAll ~ job:", job);
-//     let scheduledNotification = null;
-//     if (nowTime > now) {
-//       scheduledNotification = new Notification({
-//         title,
-//         body,
-//         NotificationTime: nowTime,
-//         status: "scheduled",
+//       return res.status(400).json({
+//         message: "Failed to subscribe token to topic 'all'.",
+//         error: errorInfo,
 //       });
-//       await scheduledNotification.save();
 //     }
 
-//     // Return response
-//     const istFormatter = new Intl.DateTimeFormat("en-IN", {
-//       timeZone: "Asia/Kolkata",
-//       year: "numeric",
-//       month: "2-digit",
-//       day: "2-digit",
-//       hour: "2-digit",
-//       minute: "2-digit",
-//       second: "2-digit",
-//     });
+//     console.log("Token subscribed to 'all' topic 📡:", response);
 
+//     // Save token to DB if it doesn't already exist
+//     const existing = await DeviceToken.findOne({ token });
+
+//     if (!existing) {
+//       console.log(username, "userName");
+//       await DeviceToken.create({ token, username, phone, email });
+//       console.log("Token saved to DB ✅");
+//     } else {
+//       console.log("Token already exists in DB 🔁");
+//     }
+
+//     const UserDetails = await DeviceToken.findOne({ token });
+//     console.log(
+//       "🚀 ~ saveAndSubscribeToken ~ existing:",
+//       UserDetails,
+//       !UserDetails
+//     );
+//     // Success Response
 //     res.status(200).json({
-//       message: "Notification scheduled successfully.",
-//       scheduledTimeIST: istFormatter.format(nowTime),
-//       currentTimeIST: istFormatter.format(now),
-//       notification: scheduledNotification
-//         ? scheduledNotification
-//         : sentNotification,
+//       message: "Token saved and subscribed to topic 'all' successfully.",
+//       firebaseResponse: response,
+//       UserDetails,
 //     });
 //   } catch (error) {
-//     console.error("❌ Error sending notifications:", error);
-//     return res.status(500).json({
-//       message: "Failed to send notifications.",
-//       error: error.message,
+//     // Specific error handling
+//     console.log("Error in saveAndSubscribeToken:", error);
+
+//     // Handle Firebase errors
+//     if (error.code && error.message) {
+//       return res.status(500).json({
+//         message: "Firebase error occurred while subscribing token.",
+//         error: {
+//           code: error.code,
+//           message: error.message,
+//         },
+//       });
+//     }
+
+//     // Handle DB or unknown server errors
+//     res.status(500).json({
+//       message: "Internal server error occurred while processing token.",
+//       error: error.message || "Unexpected error",
 //     });
 //   }
 // };
+
 export const saveAndSubscribeToken = async (req, res) => {
-  const { token, username, email, phone } = req.body;
-  console.log("🚀 ~ saveAndSubscribeToken ~ req.body:", req.body)
+  const { token, id } = req.body;
+  console.log("🚀 ~ saveAndSubscribeToken ~ req.body:", req.body);
 
   // Validate input
   if (!token || typeof token !== "string") {
     return res.status(400).json({ message: "Valid device token is required." });
   }
+
   try {
     // Subscribe token to the 'all' topic first
     const response = await admin.messaging().subscribeToTopic(token, "all");
@@ -507,7 +459,7 @@ export const saveAndSubscribeToken = async (req, res) => {
       const errorInfo =
         response.errors?.[0]?.error ||
         "Unknown error while subscribing to topic.";
-      console.log("FCM Subscription Error:");
+      console.log("FCM Subscription Error:", errorInfo);
 
       return res.status(400).json({
         message: "Failed to subscribe token to topic 'all'.",
@@ -517,34 +469,27 @@ export const saveAndSubscribeToken = async (req, res) => {
 
     console.log("Token subscribed to 'all' topic 📡:", response);
 
-    // Save token to DB if it doesn't already exist
-    const existing = await DeviceToken.findOne({ token });
+    // Save or update token
+    const existing = await DeviceToken.findOne({ id });
 
-    if (!existing) {
-      console.log(username, "userName");
-      await DeviceToken.create({ token, username, phone, email });
-      console.log("Token saved to DB ✅");
+    if (existing) {
+      // Update existing token
+      existing.token = token;
+      await existing.save();
+      console.log("Token updated for user:", id);
     } else {
-      console.log("Token already exists in DB 🔁");
+      // Create new token entry
+      await DeviceToken.create({ id, token });
+      console.log("New token saved for user:", id);
     }
 
-    const UserDetails = await DeviceToken.findOne({ token });
-    console.log(
-      "🚀 ~ saveAndSubscribeToken ~ existing:",
-      UserDetails,
-      !UserDetails
-    );
-    // Success Response
     res.status(200).json({
       message: "Token saved and subscribed to topic 'all' successfully.",
       firebaseResponse: response,
-      UserDetails,
     });
   } catch (error) {
-    // Specific error handling
     console.log("Error in saveAndSubscribeToken:", error);
 
-    // Handle Firebase errors
     if (error.code && error.message) {
       return res.status(500).json({
         message: "Firebase error occurred while subscribing token.",
@@ -555,7 +500,6 @@ export const saveAndSubscribeToken = async (req, res) => {
       });
     }
 
-    // Handle DB or unknown server errors
     res.status(500).json({
       message: "Internal server error occurred while processing token.",
       error: error.message || "Unexpected error",
@@ -597,7 +541,6 @@ export const countDeviceTokens = async (req, res) => {
   }
 };
 
-
 export const logoutAndUnsubscribeToken = async (req, res) => {
   console.log("came in logout.,..");
 
@@ -631,7 +574,6 @@ export const logoutAndUnsubscribeToken = async (req, res) => {
     });
   }
 };
-
 
 export const displayUser = async (req, res) => {
   try {

@@ -1,11 +1,7 @@
 import mongoose from "mongoose";
 
 const otpSchema = new mongoose.Schema({
-  //   userid: {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: "DeviceToken", // Assuming your user model is named 'DeviceToken'
-  //     required: true,
-  //   },
+
   userid: {
     type: String,
   },

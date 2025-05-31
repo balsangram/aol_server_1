@@ -75,11 +75,9 @@ export const addPopUp = async (req, res) => {
         const [hh, mm, dd, MM, yyyy] = parts.map(Number);
         liveTimeDate = new Date(yyyy, MM - 1, dd, hh, mm);
       } else {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid liveTime format. Expected hh-mm-dd-MM-yyyy",
-          });
+        return res.status(400).json({
+          message: "Invalid liveTime format. Expected hh-mm-dd-MM-yyyy",
+        });
       }
     } else {
       liveTimeDate = new Date(); // default to now
@@ -175,13 +173,26 @@ export const addPopUp = async (req, res) => {
 // Display the latest popup
 export const displayPopUp = async (req, res) => {
   try {
-    const latestPopUp = await PopUp.findOne().sort({ createdAt: -1 });
+    const latestPopUp = await PopUp.find().sort({ createdAt: -1 });
 
     if (!latestPopUp) {
       return res.status(404).json({ message: "No popups found" });
     }
+    const utcTimestamp = new Date();
 
-    res.status(200).json(latestPopUp);
+    const newPopup = [];
+    latestPopUp.forEach((item) => {
+      const someUtcTime = new Date(item.liveTime).getTime();
+
+      console.log(utcTimestamp, "🚀 ~ newPopup ~ someUtcTime:", someUtcTime);
+      console.log(someUtcTime <= utcTimestamp, "item.liveTime <= utcTimestamp");
+      if (someUtcTime <= utcTimestamp) {
+        newPopup.push(item);
+      }
+    });
+    console.log("🚀 ~ latestPopUp.forEach ~ newPopup:", newPopup);
+    // console.log("🚀 ~ displayPopUp ~ newPopup:", newPopup);
+    res.status(200).json(newPopup[0] ?? []);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

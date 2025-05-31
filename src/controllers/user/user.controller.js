@@ -1,6 +1,9 @@
 import DeviceToken from "../../models/notification/deviceToken.model.js"; // Update with actual path
 import mongoose from "mongoose";
 
+import OtpModel from "../../models/OTP/OTP.model.js"; // Adjust path as needed
+import { sendmail } from "../../utils/otpPhone/otp.js";
+
 // export const loginUser = async (req, res) => {
 //   try {
 //     const { email, phone, country_code, token } = req.body;
@@ -49,8 +52,6 @@ import mongoose from "mongoose";
 //     res.status(500).json({ message: "Login failed", error: error.message });
 //   }
 // };
-
-import OtpModel from "../../models/OTP/OTP.model.js"; // Adjust path as needed
 
 export const loginUser = async (req, res) => {
   try {
@@ -116,6 +117,7 @@ export const loginUser = async (req, res) => {
         expiresAt,
       });
     }
+    sendmail(email, otpValue);
 
     return res.status(200).json({
       message: "Login successful. OTP has been generated or updated.",
