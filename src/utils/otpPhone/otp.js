@@ -4,7 +4,7 @@ export const sendmail = (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     port: 587,
-    secure: false,
+    secure: true,
     requireTLS: true,
     auth: {
       user: "balsangram1@gmail.com",
