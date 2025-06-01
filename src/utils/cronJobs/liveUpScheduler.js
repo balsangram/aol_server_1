@@ -3,7 +3,7 @@ import LiveLink from "../../models/LiveLink.js";
 
 export const liveLinkJob = new CronJob("*/10 * * * * *", async () => {
   const now = new Date();
-  console.log(`⏰ Running cron job at: ${now.toLocaleString()}`);
+  // console.log(`⏰ Running cron job at: ${now.toLocaleString()}`);
 
   try {
     const updated = await LiveLink.updateMany(
@@ -19,7 +19,7 @@ export const liveLinkJob = new CronJob("*/10 * * * * *", async () => {
         `✅ Updated ${updated.modifiedCount} live link(s) to isLive: true`
       );
     } else {
-      console.log("🔍 No updates needed at this time.");
+      // console.log("🔍 No updates needed at this time.");
     }
   } catch (err) {
     console.error("❌ Error updating live link status:", err);

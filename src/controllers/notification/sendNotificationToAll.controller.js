@@ -7,6 +7,15 @@ import { CronJob } from "cron";
 
 import schedule from "node-schedule";
 
+function convertDateTimeFormat(input) {
+  const [datePart, timePart] = input.split(" ");
+  const [day, month, year] = datePart.split("/");
+  const [hours, minutes] = timePart.split(":");
+
+  const formatted = `${minutes}-${hours}-${day}-${month}-${year}`;
+  return formatted;
+}
+
 export async function scheduleNotificationWithCron(
   scheduleString,
   message,
@@ -57,6 +66,30 @@ export async function scheduleNotificationWithCron(
   }
 }
 
+export async function scheduleNotificationWithoutCron(message, tokens) {
+  try {
+    // Schedule a job
+
+    const results = [];
+    const errors = [];
+
+    for (const token of tokens) {
+      try {
+        const response = await admin.messaging().send({ ...message, token });
+        results.push({ token, success: true, response });
+        console.log(
+          `✅ Notification sent to ${tokens} at ${dateIST.format()}:`,
+          response
+        );
+      } catch (err) {
+        errors.push({ token, error: err.message });
+      }
+    }
+  } catch (err) {
+    console.error(`❌ Failed to send notification:`, err.message);
+  }
+}
+
 export const sendNotificationToAll = async (req, res) => {
   const { title, body, NotificationTime } = req.body;
 
@@ -95,13 +128,14 @@ export const sendNotificationToAll = async (req, res) => {
       const day = nowTime.getDate();
       const month = nowTime.getMonth() + 1;
       cronTime = `${minute} ${hour} ${day} ${month} *`;
+
       if (nowTime < now) {
         return res.status(400).json({
           message: "NotificationTime must be in the future.",
         });
       }
     }
-
+    console.log("🚀 ~ sendNotificationToAll ~ cronTime:", cronTime);
     let sentNotification = new Notification({
       title,
       body,
@@ -112,7 +146,7 @@ export const sendNotificationToAll = async (req, res) => {
       const job = new CronJob(
         cronTime,
         async function () {
-          console.log("Executing scheduled task at IST time!");
+          console.log("inside the cron job to sedn notification to all api");
           await admin.messaging().send(message);
           await sentNotification.save();
           job.stop();
@@ -231,14 +265,21 @@ export const sendGroupNotification = async (req, res) => {
       });
     }
 
-    console.log(idStrings);
-    scheduleNotificationWithCron(NotificationTime, message, tokens);
+    let outputNotificationTime = Date.now();
+
+    if (!NotificationTime) {
+      scheduleNotificationWithoutCron(message, tokens);
+    } else {
+      outputNotificationTime = convertDateTimeFormat(NotificationTime);
+      console.log(tokens, "outputNotificationTime", outputNotificationTime);
+      scheduleNotificationWithCron(outputNotificationTime, message, tokens);
+    }
 
     let sentNotification = new Notification({
       title,
       body,
       status: "sent",
-      sentAt: NotificationTime,
+      sentAt: outputNotificationTime,
     });
 
     res.status(200).json({
@@ -287,6 +328,7 @@ export const sendSingleNotification = async (req, res) => {
       .filter((doc) => doc.token)
       .map((doc) => doc.token);
 
+    console.log("🚀 ~ sendSingleNotification ~ tokens:", tokens);
     if (tokens.length === 0) {
       return res.status(404).json({
         message: "No valid device tokens found for the provided IDs.",
@@ -332,10 +374,14 @@ export const sendSingleNotification = async (req, res) => {
 
     const results = [];
     const errors = [];
+    let outputNotificationTime = NotificationTime ?? Date.now();
 
     console.log(NotificationTime, "NotificationTime");
-
-    scheduleNotificationWithCron(NotificationTime, message, tokens);
+    if (!NotificationTime) {
+      scheduleNotificationWithoutCron(message, tokens);
+    } else {
+      scheduleNotificationWithCron(outputNotificationTime, message, tokens);
+    }
 
     const successCount = results.length;
     const failureCount = errors.length;

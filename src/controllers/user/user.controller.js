@@ -1,6 +1,6 @@
 import DeviceToken from "../../models/notification/deviceToken.model.js"; // Update with actual path
 import mongoose from "mongoose";
-
+import axios from "axios";
 import OtpModel from "../../models/OTP/OTP.model.js"; // Adjust path as needed
 import { sendmail } from "../../utils/otpPhone/otp.js";
 
@@ -97,6 +97,109 @@ export const updateDetails = async (req, res) => {
   } catch (error) {}
 };
 
+// export const loginUser = async (req, res) => {
+//   try {
+//     const { email, phone, country_code, token } = req.body;
+//     console.log("🚀 ~ loginUser ~ req.body:", req.body);
+
+//     // Validate required fields
+//     if (!email && !phone) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email or phone number is required.",
+//       });
+//     }
+
+//     if (phone && !country_code) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Country code is required when using phone number.",
+//       });
+//     }
+
+//     // Build query based on login method
+//     const query = email ? { email } : { phone, country_code };
+
+//     // Find user
+//     let user = await DeviceToken.findOne(query);
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found.",
+//       });
+//     }
+
+//     // Update device token if provided
+//     if (token) {
+//       user = await DeviceToken.findOneAndUpdate(
+//         { _id: user._id },
+//         { $set: { token } },
+//         { new: true } // Return the updated document
+//       );
+//     }
+
+//     // Generate OTP
+//     const otpValue = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+//     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+//     const type = email ? "email" : "phone";
+//     const identifier = email ? email : `${country_code}${phone}`; // Fixed: Properly define identifier
+
+//     // Upsert OTP (update if exists, create if not)
+//     await OtpModel.findOneAndUpdate(
+//       { userid: user._id },
+//       {
+//         type,
+//         identifier,
+//         otp: otpValue,
+//         expiresAt,
+//       },
+//       { upsert: true, new: true }
+//     );
+
+//     // Send OTP via appropriate channel
+//     if (email) {
+//       try {
+//         await sendmail(email, otpValue);
+//         console.log(`OTP sent to ${email}`);
+//       } catch (emailError) {
+//         console.error("❌ Email sending failed:", emailError);
+//         // Consider alternative notification method here
+//       }
+//     } else if (phone) {
+//       // TODO: Implement SMS OTP sending
+//       console.log(`SMS OTP would be sent to ${country_code}${phone}`);
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "OTP has been sent successfully",
+//       user: {
+//         _id: user._id,
+//         email: user.email,
+//         phone: user.phone,
+//         country_code: user.country_code,
+//       },
+//       // Only include OTP in development for testing
+//       ...(process.env.NODE_ENV === "development" && { otp: otpValue }),
+//     });
+//   } catch (error) {
+//     console.error("❌ Login error:", error);
+
+//     if (error.code === 11000) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Duplicate entry detected.",
+//       });
+//     }
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Login failed",
+//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
+//     });
+//   }
+// };
+
 export const loginUser = async (req, res) => {
   try {
     const { email, phone, country_code, token } = req.body;
@@ -144,6 +247,7 @@ export const loginUser = async (req, res) => {
     const type = email ? "email" : "phone";
     const identifier = email ? email : `${country_code}${phone}`; // Fixed: Properly define identifier
 
+    console.log("🚀 ~ loginUser ~ identifier:", identifier);
     // Upsert OTP (update if exists, create if not)
     await OtpModel.findOneAndUpdate(
       { userid: user._id },
@@ -166,8 +270,42 @@ export const loginUser = async (req, res) => {
         // Consider alternative notification method here
       }
     } else if (phone) {
-      // TODO: Implement SMS OTP sending
-      console.log(`SMS OTP would be sent to ${country_code}${phone}`);
+      try {
+        // MSG91 API request to send OTP
+        const msg91Response = await axios.post(
+          "https://api.msg91.com/api/v5/flow/",
+          {
+            flow_id: "66dfe7fed6fc052fc01f1842",
+            sender: "AOLINF",
+            mobiles: "916370404471",
+            otp: otpValue, // Pass the OTP variable
+            template_id: "1207172550773733867",
+          },
+          {
+            headers: {
+              authkey: "366242AmCuCbkuRKH1655999f6P1",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("🚀 ~ loginUser ~ msg91Response:", msg91Response.data);
+
+        if (msg91Response.data.type === "success") {
+          console.log(`SMS OTP sent to ${country_code}${phone}`);
+        } else {
+          throw new Error(`MSG91 API error: ${msg91Response.data.message}`);
+        }
+      } catch (smsError) {
+        console.error("❌ SMS sending failed:", smsError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send SMS OTP",
+          error:
+            process.env.NODE_ENV === "development"
+              ? smsError.message
+              : undefined,
+        });
+      }
     }
 
     return res.status(200).json({
