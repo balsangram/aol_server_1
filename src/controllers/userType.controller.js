@@ -207,7 +207,7 @@ export const changeHomeLikeOrDislike = async (req, res) => {
       return res.status(404).json({ message: "Device not found." });
     }
     if (!exisstcardId) {
-      return res.status(404).json({ message: "UserType not found." });
+      return res.status(404).json({ message: "UserType home not found." });
     }
 
     if (!exist.CardTypes.some((id) => id.toString() === cardId)) {
