@@ -157,7 +157,10 @@ export const changeLikeOrDislike = async (req, res) => {
   try {
     const { id } = req.params; // Assuming you're passing `id` in the route parameter
     const { cardId } = req.body;
+    console.log("🚀 ~ changeLikeOrDislike ~ id:", id);
+    console.log("🚀 ~ changeLikeOrDislike ~ cardId:", cardId);
     const exist = await DeviceToken.findById(id);
+    console.log("🚀 ~ changeLikeOrDislike ~ exist:", exist);
     if (!exist) {
       return res.status(404).json({ message: "Device not found." });
     }
