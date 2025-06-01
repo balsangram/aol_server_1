@@ -38,27 +38,81 @@ export const displayLiveLink = async (req, res) => {
 //   try {
 //     console.log(req.body, "body");
 
-//     // Step 1: Delete existing entries
-//     const existingLinks = await LiveLink.find();
+//     // ✅ Step 1: Fetch all existing live links before deletion
+//     const existingLinks = await LiveLink.find({});
+
+//     // ✅ Step 2: Save to history collection if any
 //     if (existingLinks.length > 0) {
-//       await LiveLink.deleteMany({});
+//       await HistoryLiveLink.insertMany(
+//         existingLinks.map((link) => ({
+//           link: link.link,
+//           liveTime: link.liveTime,
+//           isLive: link.isLive,
+//           createdAt: link.createdAt || new Date(), // assuming timestamps
+//         }))
+//       );
 //     }
 
-//     // Step 2: Validate and add new link
-//     const { link } = req.body;
-//     if (!link) {
-//       return res.status(400).json({ message: "Link is required" });
+//     // ✅ Step 3: Delete all existing live links
+//     await LiveLink.deleteMany({});
+
+//     // Step 4: Extract link and liveTime
+//     const { link, liveTime } = req.body;
+
+//     if (!link || !liveTime) {
+//       return res
+//         .status(400)
+//         .json({ message: "Link and liveTime are required" });
 //     }
 
-//     const newLink = new LiveLink({ link });
-//     console.log(newLink, "newLink");
+//     const liveDate = new Date(liveTime);
+//     if (isNaN(liveDate.getTime())) {
+//       return res.status(400).json({ message: "Invalid liveTime format" });
+//     }
 
+//     if (liveDate <= new Date()) {
+//       return res
+//         .status(400)
+//         .json({ message: "liveTime must be in the future" });
+//     }
+
+//     // Step 5: Save new LiveLink with isLive = false
+//     const newLink = new LiveLink({
+//       link,
+//       liveTime: liveDate,
+//       isLive: false,
+//     });
 //     const savedLink = await newLink.save();
 
-//     // Step 3: Respond to client
+//     // Step 6: Schedule cron job to update isLive
+//     const job = new CronJob(liveDate, async () => {
+//       try {
+//         const updated = await LiveLink.findByIdAndUpdate(
+//           savedLink._id,
+//           { isLive: true },
+//           { new: true }
+//         );
+//         console.log("Live link is now live:", updated);
+//       } catch (err) {
+//         console.error("Error updating live link status:", err);
+//       }
+//     });
+//     job.start();
+
+//     // Step 7: Convert time to IST
+//     const liveTimeIST = liveDate.toLocaleString("en-US", {
+//       timeZone: "Asia/Kolkata",
+//     });
+//     const currentTimeIST = new Date().toLocaleString("en-US", {
+//       timeZone: "Asia/Kolkata",
+//     });
+
+//     // Step 8: Respond
 //     res.status(200).json({
-//       message: "Link added successfully",
+//       message: "Link added and scheduled successfully",
 //       data: savedLink,
+//       liveTimeIST,
+//       currentTimeIST,
 //     });
 //   } catch (error) {
 //     console.error(error);
@@ -70,33 +124,56 @@ export const addLiveLink = async (req, res) => {
   try {
     console.log(req.body, "body");
 
-    // ✅ Step 1: Fetch all existing live links before deletion
+    // Step 1: Fetch all existing live links before deletion
     const existingLinks = await LiveLink.find({});
 
-    // ✅ Step 2: Save to history collection if any
+    // Step 2: Save to history collection if any
     if (existingLinks.length > 0) {
       await HistoryLiveLink.insertMany(
         existingLinks.map((link) => ({
           link: link.link,
           liveTime: link.liveTime,
           isLive: link.isLive,
-          createdAt: link.createdAt || new Date(), // assuming timestamps
+          createdAt: link.createdAt || new Date(),
         }))
       );
     }
 
-    // ✅ Step 3: Delete all existing live links
+    // Step 3: Delete all existing live links
     await LiveLink.deleteMany({});
 
     // Step 4: Extract link and liveTime
     const { link, liveTime } = req.body;
 
-    if (!link || !liveTime) {
-      return res
-        .status(400)
-        .json({ message: "Link and liveTime are required" });
+    if (!link) {
+      return res.status(400).json({ message: "Link is required" });
     }
 
+    // Step 5: Handle case when liveTime is not provided
+    if (!liveTime) {
+      // Save new LiveLink with isLive = true immediately
+      const newLink = new LiveLink({
+        link,
+        liveTime: new Date(), // Set current time as liveTime
+        isLive: true,
+      });
+      const savedLink = await newLink.save();
+
+      // Convert time to IST
+      const currentTimeIST = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+      });
+
+      // Respond
+      return res.status(200).json({
+        message: "Link added and set live immediately",
+        data: savedLink,
+        liveTimeIST: currentTimeIST,
+        currentTimeIST,
+      });
+    }
+
+    // Step 6: Validate liveTime if provided
     const liveDate = new Date(liveTime);
     if (isNaN(liveDate.getTime())) {
       return res.status(400).json({ message: "Invalid liveTime format" });
@@ -108,7 +185,7 @@ export const addLiveLink = async (req, res) => {
         .json({ message: "liveTime must be in the future" });
     }
 
-    // Step 5: Save new LiveLink with isLive = false
+    // Step 7: Save new LiveLink with isLive = false
     const newLink = new LiveLink({
       link,
       liveTime: liveDate,
@@ -116,7 +193,7 @@ export const addLiveLink = async (req, res) => {
     });
     const savedLink = await newLink.save();
 
-    // Step 6: Schedule cron job to update isLive
+    // Step 8: Schedule cron job to update isLive
     const job = new CronJob(liveDate, async () => {
       try {
         const updated = await LiveLink.findByIdAndUpdate(
@@ -131,7 +208,7 @@ export const addLiveLink = async (req, res) => {
     });
     job.start();
 
-    // Step 7: Convert time to IST
+    // Step 9: Convert time to IST
     const liveTimeIST = liveDate.toLocaleString("en-US", {
       timeZone: "Asia/Kolkata",
     });
@@ -139,7 +216,7 @@ export const addLiveLink = async (req, res) => {
       timeZone: "Asia/Kolkata",
     });
 
-    // Step 8: Respond
+    // Step 10: Respond
     res.status(200).json({
       message: "Link added and scheduled successfully",
       data: savedLink,
@@ -151,80 +228,6 @@ export const addLiveLink = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-// export const addLiveLink = async (req, res) => {
-//   try {
-//     console.log(req.body, "body");
-
-//     // Step 1: Delete all existing live links (only one allowed at a time)
-//     await LiveLink.deleteMany({});
-
-//     // Step 2: Extract link and liveTime
-//     const { link, liveTime } = req.body;
-
-//     if (!link || !liveTime) {
-//       return res
-//         .status(400)
-//         .json({ message: "Link and liveTime are required" });
-//     }
-
-//     const liveDate = new Date(liveTime);
-//     console.log("🚀 ~ addLiveLink ~ liveDate:", liveDate);
-//     if (isNaN(liveDate.getTime())) {
-//       return res.status(400).json({ message: "Invalid liveTime format" });
-//     }
-
-//     if (liveDate <= new Date()) {
-//       return res
-//         .status(400)
-//         .json({ message: "liveTime must be in the future" });
-//     }
-
-//     // Step 3: Save new LiveLink with isLive = false
-//     const newLink = new LiveLink({
-//       link,
-//       liveTime: liveDate,
-//       isLive: false,
-//     });
-//     const savedLink = await newLink.save();
-
-//     // Step 4: Schedule a cron job to update isLive when liveTime reached
-//     const job = new CronJob(liveDate, async () => {
-//       try {
-//         const updated = await LiveLink.findByIdAndUpdate(
-//           savedLink._id,
-//           { isLive: true },
-//           { new: true }
-//         );
-//         console.log("Live link is now live:", updated);
-//       } catch (err) {
-//         console.error("Error updating live link status:", err);
-//       }
-//     });
-
-//     job.start();
-
-//     // Step 5: Convert liveTime to IST for display
-//     const liveTimeIST = liveDate.toLocaleString("en-US", {
-//       timeZone: "Asia/Kolkata",
-//     });
-
-//     const currentTimeIST = new Date().toLocaleString("en-US", {
-//       timeZone: "Asia/Kolkata",
-//     });
-
-//     // Step 6: Respond
-//     res.status(200).json({
-//       message: "Link added and scheduled successfully",
-//       data: savedLink,
-//       liveTimeIST,
-//       currentTimeIST,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
 
 export const stopLiveLink = async (req, res) => {
   try {

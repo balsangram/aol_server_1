@@ -53,6 +53,25 @@ import { sendmail } from "../../utils/otpPhone/otp.js";
 //   }
 // };
 
+export const userDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await DeviceToken.findById(id)
+      .populate("userTypes") // populates referenced UserType documents
+      .populate("CardTypes"); // populates referenced Card documents
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 export const loginUser = async (req, res) => {
   try {
     const { email, phone, country_code, token } = req.body;

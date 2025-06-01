@@ -155,6 +155,7 @@ import {
   logoutuser,
   OTPCheck,
   registerUser,
+  userDetails,
 } from "../controllers/user/user.controller.js";
 import {
   // addHomeLinkLog,
@@ -187,6 +188,7 @@ router.post("/adminLogin", loginAdmin);
 router.post("/userLogin", loginUser);
 router.post("/userRegister", registerUser);
 router.delete("/userDelet/:id", deleteUser);
+router.get("/getdetails/:id", userDetails);
 router.post("/OTPCheck/:id", OTPCheck);
 router.patch("/logout", logoutuser);
 
