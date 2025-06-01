@@ -8,7 +8,7 @@ const deviceTokenSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     country_code: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
-
+    aadhar: { type: String, required: false, unique: true, default: "" },
     userTypes: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -95,10 +95,9 @@ export const updateDetails = async (req, res) => {
 
     return res.status(200).json({ success: true, data: updatedUser });
   } catch (error) {
-    console.error("Error updating user details:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    
   }
-};
+}
 
 export const loginUser = async (req, res) => {
   try {
