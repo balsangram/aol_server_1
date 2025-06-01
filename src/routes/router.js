@@ -155,6 +155,7 @@ import {
   logoutuser,
   OTPCheck,
   registerUser,
+  updateDetails,
   userDetails,
 } from "../controllers/user/user.controller.js";
 import {
@@ -189,6 +190,7 @@ router.post("/userLogin", loginUser);
 router.post("/userRegister", registerUser);
 router.delete("/userDelet/:id", deleteUser);
 router.get("/getdetails/:id", userDetails);
+router.patch("/updateUserDetails/:id", updateDetails);
 router.post("/OTPCheck/:id", OTPCheck);
 router.patch("/logout", logoutuser);
 

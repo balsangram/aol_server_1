@@ -72,6 +72,34 @@ export const userDetails = async (req, res) => {
   }
 };
 
+export const updateDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Optional: Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    // Perform the update
+    const updatedUser = await DeviceToken.findByIdAndUpdate(id, req.body, {
+      new: true, // Return the updated document
+      runValidators: true, // Apply schema validations
+    })
+      .populate("userTypes")
+      .populate("CardTypes");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ success: true, data: updatedUser });
+  } catch (error) {
+    console.error("Error updating user details:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 export const loginUser = async (req, res) => {
   try {
     const { email, phone, country_code, token } = req.body;
