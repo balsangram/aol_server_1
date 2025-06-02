@@ -1,7 +1,7 @@
 import { CronJob } from "cron";
 import LiveLink from "../../models/LiveLink.js";
 
-export const liveLinkJob = new CronJob("*/10 * * * * *", async () => {
+export const liveLinkJob = new CronJob("0 * * * * *", async () => {
   const now = new Date();
   // console.log(`⏰ Running cron job at: ${now.toLocaleString()}`);
 

@@ -188,7 +188,7 @@ router.post("/adminLogin", loginAdmin);
 // user
 router.post("/userLogin", loginUser);
 router.post("/userRegister", registerUser);
-router.delete("/userDelet/:id", deleteUser);
+router.delete("/userDelete/:id", deleteUser);
 router.get("/getdetails/:id", userDetails);
 router.patch("/updateUserDetails/:id", updateDetails);
 router.post("/OTPCheck/:id", OTPCheck);

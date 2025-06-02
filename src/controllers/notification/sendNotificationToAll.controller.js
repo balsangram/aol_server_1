@@ -52,7 +52,7 @@ export async function scheduleNotificationWithCron(
           const response = await admin.messaging().send({ ...message, token });
           results.push({ token, success: true, response });
           console.log(
-            `✅ Notification sent to ${tokens} at ${dateIST.format()}:`,
+            `✅ 👍 Notification sent to ${tokens} at ${dateIST.format()}:`,
             response
           );
         } catch (err) {
@@ -78,7 +78,7 @@ export async function scheduleNotificationWithoutCron(message, tokens) {
         const response = await admin.messaging().send({ ...message, token });
         results.push({ token, success: true, response });
         console.log(
-          `✅ Notification sent to ${tokens} at ${dateIST.format()}:`,
+          `✅ ⌚Notification sent to ${tokens} at ${dateIST.format()}:`,
           response
         );
       } catch (err) {
@@ -778,14 +778,17 @@ export const getUserNotifications = async (req, res) => {
     // Add condition to only get notifications where NotificationTime <= now
     const notifications = await Notification.find({
       createdAt: { $gte: deviceCreatedAt },
-      NotificationTime: { $lte: now },  // <-- This line filters out future notifications
+      NotificationTime: { $lte: now }, // <-- This line filters out future notifications
     })
       .sort({ createdAt: -1 })
       .limit(15)
       .lean();
 
     const filteredNotifications = notifications.filter((notification) => {
-      if (!notification.deviceTokens || notification.deviceTokens.length === 0) {
+      if (
+        !notification.deviceTokens ||
+        notification.deviceTokens.length === 0
+      ) {
         return true;
       }
       return notification.deviceTokens.some(
@@ -821,7 +824,6 @@ export const getUserNotifications = async (req, res) => {
     });
   }
 };
-
 
 export const searchUser = async (req, res) => {
   try {
