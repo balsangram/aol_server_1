@@ -7,8 +7,8 @@ export const sendmail = (email, otp) => {
     secure: true,
     requireTLS: true,
     auth: {
-      user: "balsangram1@gmail.com",
-      pass: "hzkjrlrfyuyohfal",
+      user: "head.eventspromotion@gmail.com",
+      pass: "mlillnuyamyjjlhk",
     },
   });
 
