@@ -553,21 +553,58 @@ export const saveAndSubscribeToken = async (req, res) => {
   }
 };
 
+// export const displayAllNotification = async (req, res) => {
+//   try {
+//     const notifications = await Notification.find()
+//       .sort({ createdAt: -1 })
+//       .limit(5) // ✅ Limit to 20 results
+//       .lean();
+
+//     const formatted = notifications.map((n) => {
+//       const istTime = moment(n.createdAt).tz("Asia/Kolkata");
+
+//       return {
+//         ...n,
+//         dateTime: istTime.format("DD-MM-YYYY HH:mm:ss"), // Updated format
+//       };
+//     });
+
+//     const now = new Date();
+//     console.log("Current time:", now.toLocaleString());
+
+//     console.log(formatted, "formatted");
+//     res.status(200).json(formatted);
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: "Something went wrong" });
+//   }
+// };
+
+// Better naming if you are counting device tokens
+
 export const displayAllNotification = async (req, res) => {
   try {
-    const notifications = await Notification.find()
+    const now = new Date();
+
+    // Fetch all notifications sorted by createdAt descending
+    const allNotifications = await Notification.find()
       .sort({ createdAt: -1 })
-      .limit(15) // ✅ Limit to 20 results
+      .limit(15)
       .lean();
 
-    const formatted = notifications.map((n) => {
-      const istTime = moment(n.createdAt).tz("Asia/Kolkata");
+    // Filter: only those with NotificationTime < current time
+    const filtered = allNotifications.filter((n) => {
+      if (!n.NotificationTime) return false;
+      const notificationDate = new Date(n.NotificationTime);
+      return notificationDate <= now;
+    });
 
-
-      
+    // Format NotificationTime to IST and format as "DD-MM-YYYY HH:mm:ss"
+    const formatted = filtered.slice(0, 5).map((n) => {
+      const istTime = moment(n.NotificationTime).tz("Asia/Kolkata");
       return {
         ...n,
-        dateTime: istTime.format("DD-MM-YYYY HH:mm:ss"), // Updated format
+        NotificationTimeIST: istTime.format("DD-MM-YYYY HH:mm:ss"),
       };
     });
 
@@ -578,7 +615,6 @@ export const displayAllNotification = async (req, res) => {
   }
 };
 
-// Better naming if you are counting device tokens
 export const countDeviceTokens = async (req, res) => {
   try {
     const count = await DeviceToken.countDocuments(); // Count all device tokens
@@ -650,52 +686,112 @@ export const displayUser = async (req, res) => {
   }
 };
 
+// export const getUserNotifications = async (req, res) => {
+//   const { deviceId } = req.params;
+//   console.log("📱 Received deviceId:", deviceId);
+//  const now = new Date();
+//   try {
+//     const device = await DeviceToken.findOne({ _id: deviceId.trim() });
+//     if (!device) {
+//       return res.status(404).json({ message: "Device not registered." });
+//     }
+//     // console.log("🚀 ~ getUserNotifications ~ device:", device);
+
+//     const deviceCreatedAt = device.createdAt;
+//     // console.log(
+//     //   "🚀 ~ getUserNotifications ~ deviceCreatedAt:",
+//     //   deviceCreatedAt
+//     // );
+//     const notifications = await Notification.find({
+//       createdAt: { $gte: deviceCreatedAt },
+//     })
+//       .sort({ createdAt: -1 })
+//       .limit(15) // ✅ Limit to 20 results
+//       .lean();
+//     // console.log("🚀 ~ getUserNotifications ~ notifications:", notifications);
+
+//     const filteredNotifications = notifications.filter((notification) => {
+//       console.log(
+//         "🚀 ~ filteredNotifications ~ notification.deviceTokens.length:",
+//         notification.deviceTokens.length
+//       );
+//       console.log(
+//         "🚀 ~ filteredNotifications ~ notification.deviceTokens:",
+//         notification.deviceTokens
+//       );
+//       if (!notification.deviceTokens || notification.deviceTokens.length == 0) {
+//         return true;
+//       }
+
+//       return notification.deviceTokens.some(
+//         (token) => token.toString() === deviceId.toString()
+//       );
+//     });
+
+//     console.log(
+//       "🚀 ~ getUserNotifications ~ filteredNotifications:",
+//       filteredNotifications
+//     );
+
+//     const formattedNotifications = filteredNotifications.map((notification) => {
+//       const createdAtIST = moment(notification.createdAt).tz("Asia/Kolkata");
+//       const updatedAtIST = moment(notification.updatedAt).tz("Asia/Kolkata");
+
+//       return {
+//         _id: notification._id,
+//         title: notification.title,
+//         body: notification.body,
+//         deviceTokens: notification.deviceTokens,
+//         createdAt: createdAtIST.format("DD-MM-YYYY HH:mm:ss"),
+//         updatedAt: updatedAtIST.format("DD-MM-YYYY HH:mm:ss"),
+//       };
+//     });
+
+//     return res.status(200).json({
+//       message: formattedNotifications.length
+//         ? "Notifications fetched successfully."
+//         : "No new notifications found.",
+//       data: formattedNotifications,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching notifications:", error);
+//     return res.status(500).json({
+//       message: "Server error while fetching notifications.",
+//       error: error.message,
+//     });
+//   }
+// };
+
 export const getUserNotifications = async (req, res) => {
   const { deviceId } = req.params;
   console.log("📱 Received deviceId:", deviceId);
+  const now = new Date();
 
   try {
     const device = await DeviceToken.findOne({ _id: deviceId.trim() });
     if (!device) {
       return res.status(404).json({ message: "Device not registered." });
     }
-    // console.log("🚀 ~ getUserNotifications ~ device:", device);
 
     const deviceCreatedAt = device.createdAt;
-    // console.log(
-    //   "🚀 ~ getUserNotifications ~ deviceCreatedAt:",
-    //   deviceCreatedAt
-    // );
+
+    // Add condition to only get notifications where NotificationTime <= now
     const notifications = await Notification.find({
       createdAt: { $gte: deviceCreatedAt },
+      NotificationTime: { $lte: now },  // <-- This line filters out future notifications
     })
       .sort({ createdAt: -1 })
-      .limit(15) // ✅ Limit to 20 results
+      .limit(15)
       .lean();
-    // console.log("🚀 ~ getUserNotifications ~ notifications:", notifications);
 
     const filteredNotifications = notifications.filter((notification) => {
-      console.log(
-        "🚀 ~ filteredNotifications ~ notification.deviceTokens.length:",
-        notification.deviceTokens.length
-      );
-      console.log(
-        "🚀 ~ filteredNotifications ~ notification.deviceTokens:",
-        notification.deviceTokens
-      );
-      if (!notification.deviceTokens || notification.deviceTokens.length == 0) {
+      if (!notification.deviceTokens || notification.deviceTokens.length === 0) {
         return true;
       }
-
       return notification.deviceTokens.some(
         (token) => token.toString() === deviceId.toString()
       );
     });
-
-    console.log(
-      "🚀 ~ getUserNotifications ~ filteredNotifications:",
-      filteredNotifications
-    );
 
     const formattedNotifications = filteredNotifications.map((notification) => {
       const createdAtIST = moment(notification.createdAt).tz("Asia/Kolkata");
@@ -725,6 +821,7 @@ export const getUserNotifications = async (req, res) => {
     });
   }
 };
+
 
 export const searchUser = async (req, res) => {
   try {
